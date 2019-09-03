@@ -123,9 +123,20 @@ Challenge:
 
 2. Add a column to your data frame for discharge in meters cubed per second
 
+```{r}
+mutate(EnoDischarge, metric_Discharge = Discharge*0.0283168)
+EnoDischarge$metric_Discharge <- EnoDischarge$Discharge*0.0283168
+
+```
+
 hint: package dplyr in tidyverse includes a `mutate` function
 
 3. Add a column in your data frame for a 30-day rolling mean of the metric discharge
+
+```{r}
+mutate(EnoDischarge, rolling_mean = rollmean(x=metric_Discharge,k=30))
+EnoDischarge$Rolling_mean <- rollmean(metric_Discharge,30)
+```
 
 hint: package dplyr in tidyverse includes a `mutate` function
 hint: package zoo includes a `rollmean` function
