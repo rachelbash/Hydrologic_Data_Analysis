@@ -7,7 +7,6 @@ geometry: margin=2.54cm
 editor_options: 
   chunk_output_type: console
 ---
-a
 ## Lesson Objectives
 1. Investigate the concepts of lake stratification and mixing by analyzing monitoring data
 2. Apply data analytics skills to applied questions about physical properties of lakes
@@ -15,10 +14,14 @@ a
 
 ## Opening Discussion
 What is a lake? How does this differ from a stream, river, or wetland?
+- lodic is flowing
+-lentic is stagnant
 
 What are the physical properties of lakes?
+- contained basin or depression
 
 ## Session Set Up
+- if you want to go backwards in the file path, use .. instead of just one .
 ```{r, message = FALSE}
 # Check working directory (should be project file location)
 getwd()
@@ -60,7 +63,7 @@ dim(NTLdata)
 # How many observations are there for each lake?
 summary(NTLdata$lakename)
 
-# Let's choose the three lakes with data
+# Let's choose the three lakes with data, %in% means includes, | means OR
 NTLdata <- NTLdata %>%
   filter(lakename %in% c("Paul Lake", "Peter Lake", "Tuesday Lake"))
 
@@ -87,6 +90,7 @@ unique(Pauldata$depth)
 unique(Peterdata$depth)
 unique(Tuesdaydata$depth)
 # Why didn't we use the "summary" function here?
+#Because it gives us the min, max, median, etc. We don't want that, just a list of depths
 ```
 
 ### Exploratory data visualization
@@ -101,7 +105,7 @@ print(TempvsDepth)
 ```
 
 How do temperatures at the surface compare to temperatures at the mid-depths and at the bottom?
-<add notes here>
+<Surface temps are higher at surface, but greater variability. At deep depths it is lower temp, with small variability. As lake depth increases, temp decreases.>
 
 Let's make a few data frames that include measurements from specific depths. We will choose dates only from the 2000s for ease of interpretation.
 
@@ -121,7 +125,7 @@ Pauldata.bottom <- filter(Pauldata2000s, depth == 12)
 Now let's plot a few of the data frames on the same ggplot. How do temperatures at the surface compare to those at 2 m depth? How do temperatures at the bottom compare to those at 9 m depth?
 <add notes here>
 
-Here we are highlighting depths considered the **epilimnion** and **hypolimnion**.
+Here we are highlighting depths considered the **epilimnion** (closer to surface mixed layer) and **hypolimnion** (lower level). Differences in densities between bottom and middle resist mixing. 
 ```{r}
 Tempplot.mixed <- 
   ggplot(Pauldata.surface, aes(x = sampledate, y = temperature_C)) +
@@ -139,7 +143,7 @@ print(Tempplot.mixed)
 Now let's take out the 2 m and 9 m points and add in the 4 m and 6 m points. How do these compare to the surface and bottom temperatures?
 <add notes here>
 
-Here are are highlighting depths considered the **metalimnion** or **thermocline**.
+Here are are highlighting depths considered the **metalimnion** or **thermocline**. Where there is a difference in temp, a rapid temp decline
 ```{r}
 Tempplot.thermocline <- 
   ggplot(Pauldata.surface, aes(x = sampledate, y = temperature_C)) +
@@ -190,6 +194,13 @@ TempprofileMay2016 <-
   scale_x_continuous(position = "top", limits = c(0, 30)) +
   labs(x = expression("Temperature "(degree*C)), y = "Depth (m)")
 print(TempprofileMay2016)
+#to do a reverse graph, use scale_y_reverse and scale_x_continuous (position = "top")
+#line represents 4 degrees Celcius: max density of water is at 4 degrees. Unless there is actual frozen water, 4 degrees is the coldest you will get
+#surface of lake is getting warm from contact with atm. Light and energy doesn't penetrate down to bottom
+
+#epilimnion surface mixed layer: 0-2 m
+#2-5m is thermocline (diffusion)
+#5m and lower hypolimnion 
 
 TempprofileJune2016 <- 
   TempprofileMay2016 +
@@ -208,11 +219,13 @@ TempprofileAug2016 <-
   geom_line(data = Pauldata.Aug2016, aes(x = temperature_C, y = depth), 
             color = "#1d91c0")
 print(TempprofileAug2016)
+#epilimnion has gotten warmer and warmer throughout the year, but still remains between 0-2m
+#massive density/temperature gradients in thermocline, increases throughout the summer
 ```
 <add notes here>
 
 In some places, the lines are not consistently smooth. What's going on here? How does this differ from your expectations of what the data should look like?
-<add notes here>
+<data collection errors, it should look smooth but human error happens>
 
 If you were to explain this graph to someone who didn't know anything about lakes, how would you describe it? Write your answer below. 
 
@@ -229,7 +242,7 @@ Tempprofiles2016 <-
   geom_point() +
   scale_y_reverse() +
   scale_x_continuous(position = "top") +
-  scale_color_viridis_c() +
+  scale_color_viridis_d() +
   labs(x = expression("Temperature "(degree*C)), y = "Depth (m)", 
        color = "Julian Day")
 print(Tempprofiles2016)
@@ -237,7 +250,7 @@ print(Tempprofiles2016)
 ```
 
 Paul Lake, like many lakes in temperate climates, is **dimictic**. What does this mean? What evidence do you see of this phenomenon in the graph? If you had data from the rest of the year, what would you expect to see?
-<add notes here>
+- dimictic: mixes twice throughout the year. Fall turnover (air cools, causing loss of heat from lake, lower density gradient) and happens in the spring after ice melt
 
 
 Let's put your prediction to the test. In 1993, the lake was sampled in November. Wrangle your data to capture this date and create a profile graph of that date.
@@ -246,8 +259,9 @@ Let's put your prediction to the test. In 1993, the lake was sampled in November
 ```
 
 Why does mixing occur in the spring and fall? What are the mechanisms that make this possible?
-<add notes here>
+wind driven, small enough density gradient where force of wind is able to mix up density differences within the water column
 
 ## Closing Discussion
 
 What are the main concepts you learned about the physical properties of lakes today? What was the evidence for these concepts in the dataset?
+- epilimnion cuts off when there is a 1 degree change in less than a meter.
