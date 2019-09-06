@@ -1,6 +1,6 @@
 ---
 title: "Assignment 2: Physical Properties of Lakes"
-author: "Student Name"
+author: "Rachel Bash"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,6 +28,17 @@ The completed exercise is due on 11 September 2019 at 9:00 am.
 4. Set your ggplot theme (can be theme_classic or something else)
 
 ```{r}
+getwd()
+
+library(tidyverse)
+library(lubridate)
+library(cowplot)
+
+NTLdata <- read.csv("./Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
+NTLdata$sampledate <- as.Date(NTLdata$sampledate, format = "%d/%m/%y")
+
+theme_set(theme_classic())
+
 
 ```
 
@@ -38,7 +49,9 @@ The completed exercise is due on 11 September 2019 at 9:00 am.
 5. Choose either Peter or Tuesday Lake. Create a new data frame that wrangles the full data frame so that it only includes that lake during two different years (one year from the early part of the dataset and one year from the late part of the dataset).
 
 ```{r}
-
+Peterdata <- NTLdata %>% filter(lakename == "Peter Lake")
+summary(Peterdata$year4)
+Peterdata <- Peterdata %>% filter(year4 == "1986" | year4 == "2016")
 ```
 
 6. Create three graphs: (1) temperature profiles for the early year, (2) temperature profiles for the late year, and (3) a `plot_grid` of the two graphs together. Choose `geom_point` and color your points by date. 
@@ -46,19 +59,46 @@ The completed exercise is due on 11 September 2019 at 9:00 am.
 Remember to edit your graphs so they follow good data visualization practices.
 
 ```{r}
+Peterearly <- Peterdata %>% filter(year4=="1986")
+Peterlate <- Peterdata %>% filter(year4=="2016")
+Peterearly.plot <- ggplot(Peterearly, aes(x = temperature_C, y = depth, color = daynum)) +
+  geom_point() +
+  scale_y_reverse(breaks=c(0,2,4,6,8,10,12,14,16)) +
+  scale_x_continuous(position = "top") +
+  scale_color_viridis_c(end = "0.8", option = "viridis") +
+  labs(x = expression("1986 Temperature "(degree*C)), y = "Depth (m)") +
+  theme(legend.position = "none") 
+  
+print(Peterearly.plot)
+
+Peterlate.plot <- ggplot(Peterlate,aes(x = temperature_C, y = depth, color = daynum)) +
+  geom_point() +
+  scale_y_reverse(breaks = c(0,2,4,6,8,10,12,14,16)) +
+  coord_cartesian(ylim = c(0, 16)) +
+  scale_x_continuous(position = "top") +
+  scale_color_viridis_c(end = "0.8", option = "viridis") +
+  labs(x = expression("2016 Temperature "(degree*C)), y = "Depth (m)",  color = "Julian Day") +
+  theme(axis.text.y = element_blank(), axis.title.y = element_blank())
+print(Peterlate.plot)
+
+Peterearlylate.grid <- plot_grid(Peterearly.plot, Peterlate.plot, ncol=2, 
+                                 rel_widths = c(1,1.2))
+print(Peterearlylate.grid)
 
 ```
 
 7. Interpret the stratification patterns in your graphs in light of seasonal trends. In addition, do you see differences between the two years?
 
-> 
+> The relative temperature of the Peter Lake, specifically in the epilimnion and the metalimnion, increase as the season progresses, for both years. The lake depth in 1986 looks to be deeper than in 2016, as they took samples as deep as 16 feet, whereas in 2016 the deepest lake sample recorded was 12 feet. In 2016, it appears that the beginning of the year was particularly cold in the epilimnion, hovering around 12 degrees Celcius, until it jumps pretty substantially not too long later.In 1986, it looks like perhaps it was a colder fall, as the temperature in the epilimnion decreases later in the season. It is interesting to note that even in the hypolimnion in 2016, the temperature did increase a little, which perhaps means that the shallower lake received a little bit of light or some mixing behaviors near the end of the summer.
 
 ### Multiple lakes, single date 
 
 8. On July 25, 26, and 27 in 2016, all three lakes (Peter, Paul, and Tuesday) were sampled. Wrangle your data frame to include just these three dates.
 
 ```{r}
-
+Julyzoom <- NTLdata %>% filter(lakename == "Peter Lake" | lakename == "Paul Lake" | lakename == "Tuesday Lake") %>% filter(daynum %in% c("207", "208", "209"))
+  
+  
 ```
 
 9. Plot a profile line graph of temperature by depth, one line per lake. Each lake can be designated by a separate color.
