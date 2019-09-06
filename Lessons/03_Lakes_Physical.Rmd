@@ -7,6 +7,10 @@ geometry: margin=2.54cm
 editor_options: 
   chunk_output_type: console
 ---
+<<<<<<< HEAD
+=======
+a
+>>>>>>> faabfe312f632e51683e5e2a81d84200ddd4ff89
 ## Lesson Objectives
 1. Investigate the concepts of lake stratification and mixing by analyzing monitoring data
 2. Apply data analytics skills to applied questions about physical properties of lakes
@@ -264,4 +268,4 @@ wind driven, small enough density gradient where force of wind is able to mix up
 ## Closing Discussion
 
 What are the main concepts you learned about the physical properties of lakes today? What was the evidence for these concepts in the dataset?
-- epilimnion cuts off when there is a 1 degree change in less than a meter.
+- epilimnion cuts off when there is a 1 degree temp change in less than a meter.
