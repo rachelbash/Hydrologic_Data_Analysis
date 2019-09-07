@@ -27,14 +27,14 @@ The completed exercise is due on 11 September 2019 at 9:00 am.
 3. Import the NTL-LTER physical lake dataset and set the date column to the date format
 4. Set your ggplot theme (can be theme_classic or something else)
 
-```{r}
+```{r, message=FALSE}
 getwd()
 
 library(tidyverse)
 library(lubridate)
 library(cowplot)
 
-NTLdata <- read.csv("./Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
+NTLdata <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 NTLdata$sampledate <- as.Date(NTLdata$sampledate, format = "%d/%m/%y")
 
 theme_set(theme_classic())
@@ -48,9 +48,8 @@ theme_set(theme_classic())
 
 5. Choose either Peter or Tuesday Lake. Create a new data frame that wrangles the full data frame so that it only includes that lake during two different years (one year from the early part of the dataset and one year from the late part of the dataset).
 
-```{r}
+```{r, warning=FALSE}
 Peterdata <- NTLdata %>% filter(lakename == "Peter Lake")
-summary(Peterdata$year4)
 Peterdata <- Peterdata %>% filter(year4 == "1986" | year4 == "2016")
 ```
 
@@ -58,7 +57,7 @@ Peterdata <- Peterdata %>% filter(year4 == "1986" | year4 == "2016")
 
 Remember to edit your graphs so they follow good data visualization practices.
 
-```{r}
+```{r, warning=FALSE}
 Peterearly <- Peterdata %>% filter(year4=="1986")
 Peterlate <- Peterdata %>% filter(year4=="2016")
 Peterearly.plot <- ggplot(Peterearly, aes(x = temperature_C, y = depth, color = daynum)) +
@@ -95,29 +94,53 @@ print(Peterearlylate.grid)
 
 8. On July 25, 26, and 27 in 2016, all three lakes (Peter, Paul, and Tuesday) were sampled. Wrangle your data frame to include just these three dates.
 
-```{r}
-Julyzoom <- NTLdata %>% filter(lakename == "Peter Lake" | lakename == "Paul Lake" | lakename == "Tuesday Lake") %>% filter(daynum %in% c("207", "208", "209"))
+```{r, warning=FALSE}
+Julyzoom <- NTLdata %>% filter(lakename == "Peter Lake" | lakename == "Paul Lake" | lakename == "Tuesday Lake") %>% filter(daynum %in% c("207", "208", "209")) %>% filter(year4=="2016")
   
   
 ```
 
 9. Plot a profile line graph of temperature by depth, one line per lake. Each lake can be designated by a separate color.
 
-```{r}
-
+```{r, warning=FALSE}
+Julyzoom.plot <- ggplot(Julyzoom, aes(x=temperature_C, y=depth, color=lakename)) +
+  geom_line() +
+  scale_y_reverse() +
+  scale_x_continuous(position = "top") +
+  labs(x = expression("Temperature "(degree*C)), y = "Depth (m)",  color = "Lake" ) +
+  scale_color_brewer(type = "div", palette = "Set2") 
+print(Julyzoom.plot)
 ```
 
 10. What is the depth range of the epilimnion in each lake? The thermocline? The hypolimnion?
 
->
+> Epilimnion: for both Tuesday and Peter, the epilimnion is from about surface level (0) to about 1.5m, and for Paul, it is about 0 to 2.25m. Thermocline: Peter and Tuesday lakes have about the same thermocline as well, between 1.5m to about 6m. Paul's thermocline ends a bit deeper, going from 2.25 to about 7m. Hypolimnion: Tuesday and Peter - 6m and below to the bottom which reaches to about 12m. Paul Lake has a hypolimnion from 7 to about 9m, the bottom of that lake.
 
 ## Trends in surface temperatures over time. 
 11. Run the same analyses we ran in class to determine if surface lake temperatures for a given month have increased over time ("Long-term change in temperature" section of day 4 lesson in its entirety), this time for either Peter or Tuesday Lake. 
 
-```{r}
+```{r, warning=FALSE}
+Peterdata.all <- NTLdata %>% filter(lakename == "Peter Lake") %>%  mutate(Month = month(sampledate)) %>% filter(Month %in% c("5", "6", "7", "8")) %>% filter(depth == 0)
+
+Peterdata.May <- Peterdata.all %>% filter(Month=="5")
+Peterdata.Jun <- Peterdata.all %>% filter(Month=="6")
+Peterdata.Jul <- Peterdata.all %>% filter(Month=="7")
+Peterdata.Aug <- Peterdata.all %>% filter(Month=="8")
+
+Peterdata.May.test <- lm(data=Peterdata.May, temperature_C ~ year4)
+summary(Peterdata.May.test)
+
+Peterdata.Jun.test <- lm(data=Peterdata.Jun, temperature_C ~ year4)
+summary(Peterdata.Jun.test)
+
+Peterdata.Jul.test <- lm(data=Peterdata.Jul, temperature_C ~ year4)
+summary(Peterdata.Jul.test)
+
+Peterdata.Aug.test <- lm(data=Peterdata.Aug, temperature_C ~ year4)
+summary(Peterdata.Aug.test)
 
 ```
 
 12. How do your results compare to those we found in class for Paul Lake? Do similar trends exist for both lakes?
 
-> 
+> In the analyses above, we find that there is no significant temperature change across years for any of the summer months in Peter Lake. Every linear regression that I ran had p-values greater than 0.05, indicating no significant change over time. These results are different than the ones we found in Paul lake in class. It is possible that these lakes have differences that have caused there to be different results when I run the same test on each lake. This doesn't make either of my analyses wrong, it simply indicates that there may be more things to discover about each of these lakes. 
