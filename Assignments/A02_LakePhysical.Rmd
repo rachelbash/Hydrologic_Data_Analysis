@@ -34,7 +34,7 @@ library(tidyverse)
 library(lubridate)
 library(cowplot)
 
-NTLdata <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
+NTLdata <- read.csv("./Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 NTLdata$sampledate <- as.Date(NTLdata$sampledate, format = "%d/%m/%y")
 
 theme_set(theme_classic())

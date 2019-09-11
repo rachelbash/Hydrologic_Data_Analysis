@@ -15,6 +15,12 @@ editor_options:
 
 ## Opening Discussion
 What are the physical properties of streams and rivers? What variables might be of interest?
+- discharge (vol/time)
+- velocity (distance/time)
+- bed material -> erosion
+- temperature
+- mixing (turbulent and laminar flow)
+- slope
 
 ## Session Set Up
 
@@ -47,6 +53,8 @@ DvsGHplot <-
   geom_point(alpha = 0.5) 
 print(DvsGHplot)
 ```
+> The shape of this curve is logarithmic. Empirically determined discharge
+
 
 ### Data import
 We will again be using the dataRetrieval package, which allows us to access USGS hydrologic data. We will be using the hydrologic data capabilities of this package today, but the package also comes with additional functionality to access water quality data from the Water Quality Portal. 
@@ -74,7 +82,8 @@ NehalemSummary <- whatNWISdata(siteNumbers = "14299800")
 
 What data are available from the sites? Pay particular attention to the parameter codes and statistic codes.
 
->
+> lat, long, coordinate datum, altitude, HUC ID, 
+
 
 What is the period of record for mean daily discharge at each of these sites?
 
@@ -145,6 +154,8 @@ CombinedDischarge <- full_join(EnoDischarge, VerdeDischarge, by = "Date") %>%
   full_join(., NehalemDischarge, by = "Date")
 ```
 
+* select function selects columns, filters selects rows
+
 ### Data Visualization
 ```{r}
 # Build a ggplot
@@ -200,15 +211,15 @@ print(CombinedPlot)
 
 How does the magnitude of discharge compare for these rivers?
 
->
+> Great difference in magnitude, Eno is largest magnitude, Sauk has overall lowest magnitude with lowest peak. 
 
 Which of these rivers have a seasonal cycle of discharge? How might you explain the presence and timing of seasonal cycles based on climatic conditions?
 
->
+> Bitteroot has seasonal, as does Sauk and Nahelem, though not as clearly as Bitteroot.Spring snow run-off is likely to have caused the seasonal cycles - because they are all in areas with snowpack.
 
 Hypothetical question: If you wanted to create a ggplot using facets instead of `plot_grid`, how would you go about wrangling your dataset differently? 
 
->
+> rbind (combine dataset on top of one another - must have same column titles for every df), Then label all discharge columns the same. Then graph discharge by date, facet by site number.
 
 ## Defining "typical" discharge pattern
 Let's take the Bitterroot River, which displays a clear seasonal cycle. Let's define the median discharge on a given day of year and overlay this onto the range experienced. We will take a longer period of record this time.
@@ -221,10 +232,10 @@ BitterrootDischarge.Historical <- readNWISdv(siteNumbers = "12344000",
 names(BitterrootDischarge.Historical)[4:5] <- c("Discharge", "Approval.Code")
 
 BitterrootDischarge.Historical <- mutate(BitterrootDischarge.Historical, 
-                                         DOY = yday(Date))
+                                         DOY = yday(Date)) #day of year from lubridate package
 
 BitterrootDischarge.Pattern <- BitterrootDischarge.Historical %>%
-  group_by(DOY) %>%
+  group_by(DOY) %>% #have all Jan 1 values and group them together
   summarise(Median.Discharge = median(Discharge), 
             Max.Discharge = max(Discharge),
             Min.Discharge = min(Discharge))
@@ -242,3 +253,5 @@ Challenge: Edit the code above so that rather than plotting the minimum and maxi
 
 ## Closing Discussion
 What are your impressions of seasonal and interannual discharge for our example rivers? How might you go about interpreting discharge data for any given river?
+
+- vary by location and local weather patterns
