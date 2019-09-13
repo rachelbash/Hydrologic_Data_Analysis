@@ -1,3 +1,4 @@
+
 ---
 title: "6: Physical Properties of Rive"
 author: "Hydrologic Data Analysis | Kateri Salk"
@@ -97,8 +98,11 @@ EnoRecurrencePlot <-
   #scale_x_log10() 
 print(EnoRecurrencePlot)
 
+#creating a model that gives you a prediction line - can extrapolate
 Eno.RImodel <- lm(data = EnoRecurrence, PeakDischarge ~ log(RecurrenceInterval))
 summary(Eno.RImodel)
+#discharge = 1332 + 1725*log(x)
+#y = b + m*x
 
 #What is the discharge for a 100-year flood in this system? a 500-year flood?
 Eno.RImodel$coefficients[1] + Eno.RImodel$coefficients[2]*log(100)
@@ -121,6 +125,8 @@ EnoRecurrencePlot.Full <-
   geom_point(data = EnoRecurrence.Full, color = "#02818a",
              aes(x = RecurrenceInterval, y = PeakDischarge))
 print(EnoRecurrencePlot.Full)
+#full period of record has higher discharge events, with steeper slopes, esp at the beginning
+
 
 Eno.RImodel.Full <- lm(data = EnoRecurrence.Full, PeakDischarge ~ log(RecurrenceInterval))
 summary(Eno.RImodel.Full)
@@ -137,11 +143,13 @@ Eno.RImodel$coefficients[1] + Eno.RImodel$coefficients[2]*log(500)
 
 What differences did you see for the recurrence intervals built under different periods of record? How would your prediction of flood events differ if you were to use these models for forecasting purposes? 
 
->
+> Fuller period of record is more complete --> more accurate, also shows that there were years with higher peak discharge
 
 What would you recommend for a watershed manager seeking to build the most accurate recurrence interval model for the Eno River?
 
-> 
+> Using the longest record that you have for your stream, or for discharges for rivers in the same area...is there a trend over time? Do we need to over estimate as we predict into the future. OR a moving average to use the more recent set of data over time.
+
+> do we maximize the amoutn of data or do we choose
 
 
 ### Examining the effects of urbanization on discharge
@@ -164,6 +172,51 @@ SaladoPlot <-
 print(SaladoPlot)
 
 # add more code here: 
+SaladoDischarge <- 
+  SaladoDischarge %>%
+  mutate(Year = year(Date))
+
+SaladoRecurrence.Early <- 
+  SaladoDischarge %>%
+  filter(Year < 1990) %>%
+  group_by(Year) %>%
+  summarise(PeakDischarge = max(Discharge)) %>% 
+  mutate(Rank = rank(-PeakDischarge), 
+         RecurrenceInterval = (length(Year) + 1)/Rank, 
+         Probability = 1/RecurrenceInterval)
+
+SaladoRecurrence.Late <- 
+  SaladoDischarge %>%
+  filter(Year > 1985) %>%
+  group_by(Year) %>%
+  summarise(PeakDischarge = max(Discharge)) %>% 
+  mutate(Rank = rank(-PeakDischarge), 
+         RecurrenceInterval = (length(Year) + 1)/Rank, 
+         Probability = 1/RecurrenceInterval)
+
+#models
+Salado.RImodel.Early <- lm(data = SaladoRecurrence.Early, PeakDischarge ~ log(RecurrenceInterval))
+summary(Salado.RImodel.Early)
+Salado.RImodel.Late <- lm(data = SaladoRecurrence.Late, PeakDischarge ~ log(RecurrenceInterval))
+summary(Salado.RImodel.Late)
+Salado.RImodel.Early$coefficients
+Salado.RImodel.Late$coefficients
+
+#plots
+SaladoRecurrencePlot.Full <- 
+  ggplot(SaladoRecurrence.Early, aes(x = RecurrenceInterval, y = PeakDischarge)) +
+  geom_point() +
+  geom_point(data = SaladoRecurrence.Late, color = "#02818a",
+             aes(x = RecurrenceInterval, y = PeakDischarge))
+print(SaladoRecurrencePlot.Full)
+
+#100 and 500 year recurrence intervals
+Salado.RImodel.Early$coefficients[1] +Salado.RImodel.Early$coefficients[2]*log(100)
+Salado.RImodel.Early$coefficients[1] +Salado.RImodel.Early$coefficients[2]*log(500)
+
+Salado.RImodel.Late$coefficients[1] + Salado.RImodel.Late$coefficients[2]*log(100)
+Salado.RImodel.Late$coefficients[1] + Salado.RImodel.Late$coefficients[2]*log(500)
+
 
 ```
 
