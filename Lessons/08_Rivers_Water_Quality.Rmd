@@ -45,15 +45,15 @@ Bacteria is present in almost every stream on earth. Most bacteria are harmless,
 
 Why might it be helpful to have multiple ways to measure bacteria?
 
->
+> Differences in cost to obtain bacteria measurements. Some areas have more certain types of bacteria than others.
 
 Where and when do you think the biggest risks from harmful bacteria are?
 
->
+> After storms, low income communities, 
 
 Measuring microbiogial indicators is more expensive and time consuming than some other water quality metrics. Where and when would you measure these?
 
->
+> near pollution sites and after WWTP, after storms
 
 ## How have improvements in sewage treatment affected water quality?
 
@@ -162,15 +162,15 @@ print(Microbes.plot)
 
 How would you use all of this data to talk about changes in microbial water quality from 1970 to 2000? What are the challenges?
 
->
+> Challenges: no one piece of data for one type of bacteria. All measured differently, can't easily compare across  
 
 Do you think water quality has improved between 1970 and 2000? Why or why not?
 
->
+> Hard to tell
 
 The city of Lawrence, MA is downstream of Lowell and gets its drinking water from the Merrimack River. Use the federal drinking water standard for Total Coliforms (https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations#Microorganisms) to comment on whether or not this water necessarily needs to be treated for bacteria.
 
->
+> Used to indicate whether other harmful bacteria may be present. If it is cheaper to collect data on this, may be better to do this regularly than to test for more expensive bacteria.
 
 ## Seasonal Trends in Water Quality
 
@@ -201,7 +201,7 @@ print(coli.seasons)
 
 When are total coliform concentrations highest? Why might this be?
 
->
+> Highest at end of summer - because lots of things are growing, farm has lots of animals
 
 Does this pattern also exist for the other microbial indicators?
 
@@ -215,11 +215,11 @@ The USGS site that we got the water quality data from does not have discharge da
 
 Which site's discharge data would better indicate when the city of Lowell has exprienced a big rain event?
 
->
+> Concord, because it is smaller. A storm would have a great effect on the discharge contents of the river
 
 What would a CSO event look like in the data?
 
->
+> A sharp peak shortly after the storm.
 
 ```{r pull_hydrology}
 
@@ -253,23 +253,24 @@ Look through the data series and see if you can find some times when a CSO likel
 
 ```{r CSO_event, eval=FALSE}
 
-begin.date <- 
-end.date <- 
+begin.date <- as.Date("1973-08-28", format="%Y-%m-%d")
+end.date <- as.Date("1973-10-29", format="%Y-%m-%d")
   
-discharge.plot <- ggplot(data =  %>% 
-                   filter(), 
-                 aes(x = , y = )) +
+discharge.plot <- ggplot(data =  discharge.dat, 
+                 aes(x = Date, y = Discharge_cfs)) +
             geom_line() +
-            scale_x_date(limits =  , name  = )
+            scale_x_date(limits= c(begin.date, end.date) , name  = "") +
+            lims(y=c(0,300))
+print(discharge.plot)  
+
+microb.plot <- ggplot(data =  microb.dat,
+                 aes(x = Date)) +
+            geom_point(aes(y = Total.coli)) +
+           scale_x_date(limits = c(begin.date, end.date), name = "") +
+  lims(y=c(0,300000))
+print(microb.plot)  
   
-microb.plot <- ggplot(data =  %>% 
-                   filter(), 
-                 aes(x = )) +
-            geom_point(aes(y = ))+
-            scale_x_date(limits =  , name = )
-  
-  
-plot_grid( , , ncol = 1)
+plot_grid( discharge.plot, microb.plot , ncol = 1)
 
 ```
 

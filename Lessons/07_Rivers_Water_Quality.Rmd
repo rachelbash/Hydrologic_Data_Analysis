@@ -38,11 +38,11 @@ theme_set(theme_classic())
 
 Why are these important measures of water quality?
 
->
+> If these are at extreme quantities, they have have an impact on the ecosystem in a negative way.
 
 What types of disturbances can impact these parameters?
 
->
+> Non-point and point source pollution, HABs, 
 
 ## How does mining impact specific conductance and pH?
 
@@ -105,15 +105,15 @@ print(SpC.plot)
 
 What differences do you see?
 
->
+> More data for Kanawha river. Specific conductance is lower in Twelvepole Creek
 
 Why might mining be causing the changes you see?
 
->
+> Kanawha River has mining, which caused SpC to decrease and normalize a bit and caused pH to increase
 
 What is the data frequency of these water quality samples? Why don't we have daily values? How does this inform your interpretation of the data?
 
->
+> Every ten days. Too much work to do daily values
   
 ## What can legislative protections do for water quality?
 
@@ -208,11 +208,11 @@ t.test(x, y)
 
 How would you communicate these results to a manager? 
 
->
+> There is a significant difference in means between the Pre and Post SpC values
 
 What can you say with data visualization that you can't say with just the statistical tests?
 
->
+> The spread of differences. 
 
 
 ## How have individual ions changed over the this timeperiod?
@@ -234,15 +234,23 @@ Manganese.plot <- ggplot(Manganese.dat, aes(x = Date, y = Manganese_ugL)) +
   ggtitle("Manganese Concentrations in the Kanawha River")
 
 print(Manganese.plot)
+
+Manganese.plot2 <- ggplot(Manganese.dat, aes(x = Date, y = Manganese_ugL)) +
+  geom_point() +
+  geom_vline(xintercept = 1977, color = "grey", alpha = 0.8, lwd = 2, lty = 2) + 
+  labs(y = expression("Manganese ("*mu*g*l^-1*")")) +
+  ggtitle("Manganese Concentrations in the Kanawha River")
+
+print(Manganese.plot2)
 ```
 
 Try plotting the manganese data with points instead of lines. Which do you prefer? Why?
 
->
+> Points because it shows that there is a clear absense of data between 1960 and 1967 that the line didn't show clearly.
 
 EPA drinking water standards for Manganese are 0.05 *_mg/L_*. How does the Kanawha stack up?
 
->
+> NOT good. That converts to 50 micrograms per liter. Almost all points are above 50.
 
 Take some time to look at other ions as well. Some suggestions are sulfate (```00945```), nitrate (```71851```), and iron (```71885```), or use the ```whatNWISdata()``` function to find others! EPA drinking water regulations can be found here: https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations. Pay close attention to units! Information about parameter codes can be found in the dataframe ```parameterCdFile```.
 
