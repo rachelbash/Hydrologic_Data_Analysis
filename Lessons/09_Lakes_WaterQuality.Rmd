@@ -15,6 +15,12 @@ editor_options:
 
 ## Opening Discussion
 What are the major water quality impairments experienced in lakes?  
+- DO
+- nutrients - eutrophication (Nitrogen and Phosphorus)
+- microbes
+- odor/color
+- invasive species (that affect food web)
+- contaminants (heavy metals from industry)
 
 ## Session Set Up
 
@@ -27,9 +33,9 @@ library(lubridate)
 library(LAGOSNE)
 
 theme_set(theme_classic())
-options(scipen = 100)
+options(scipen = 100) #anything up to the hundreth decimals places, it will replace that. Fixes issues with ggplot when it deals with scientific notation
 
-lagosne_get(dest_folder = LAGOSNE:::lagos_path(), overwrite = TRUE)
+lagosne_get(dest_folder = LAGOSNE:::lagos_path(), overwrite = TRUE) #install the dataset associated with lagos package onto computer. You only need to do this once, just to download onto local drive. Once it is done, then you can load data directly
 
 ```
 
@@ -49,12 +55,12 @@ LAGOSdata <- lagosne_load()
 names(LAGOSdata)
 
 # If the package installation and data download has not worked, use this code: 
-# load(file = "./Data/Raw/LAGOSdata.rda")
+load(file = "./Data/Raw/LAGOSdata.rda")
 
 # Exploring the data types that are available
-LAGOSlocus <- LAGOSdata$locus
-LAGOSstate <- LAGOSdata$state
-LAGOSnutrient <- LAGOSdata$epi_nutr
+LAGOSlocus <- LAGOSdata$locus #metadata about all lakes in the database, one row for every lake
+LAGOSstate <- LAGOSdata$state #metadata about the state
+LAGOSnutrient <- LAGOSdata$epi_nutr #don't have any depth related info, they just have surface water data
 
 # Tell R to treat lakeid as a factor, not a numeric value
 LAGOSlocus$lagoslakeid <- as.factor(LAGOSlocus$lagoslakeid)
@@ -70,7 +76,7 @@ For example, let's find out how many lakes are in each state. Note that LAGOSloc
 Add notes about each line of code as we go along. What does each function do?
 ```{r}
 # Join data frames
-LAGOSlocations <- left_join(LAGOSlocus, LAGOSstate, by = "state_zoneid")
+LAGOSlocations <- left_join(LAGOSlocus, LAGOSstate, by = "state_zoneid") #left join. Take everything from the left and join the df on the right, by joining them by the column that they both have in common
 
 # Order by number of lakes
 LAGOSlocations <- 
@@ -86,11 +92,13 @@ print(LakeCounts)
 ## Trophic state as a metric for water quality
 Robert Carlson's 1977 paper, "A trophic state index for lakes," established the first numeric categorization system for a lake's **trophic state**, the amount of biomass a given system can sustain. Trophic state is a useful water quality metric, as it can give insight into the propensity of a system to develop algal blooms, the degree of nutrient loading in the system, and a range of other potential water quality concerns experienced by other lakes with a similar trophic state (e.g., hypoxia).
 
+Trophic state can change over time- an indicator of larger problems. Also an indicator for other water quality problems.
+
 To calculate the **Trophic State Index**, three variables can be used. Note these should not be used to define trophic state but as indicators of the broader condition. Comparing these values in a given lake can give insight into the broader mechanisms at play.
 
 * *chlorophyll a concentration*, a proxy for algal (phytoplankton) biomass. Pros: direct measure of primary productivity
-* *Secchi disk transparency*, a measure of water clarity. Pros: simple and cheap. Cons: may yield a high TSI in highly colored lakes and in lakes where particulate matter is comprised of non-algal material 
-* *Total phosphorus (TP)*, a nutrient essential for growth of primary producers. Assumptions: phosphorus is the limiting nutrient for phytoplankton growth (this assumption often holds only for summer months)
+* *Secchi disk transparency*, a measure of water clarity. Pros: simple and cheap. Cons: may yield a high TSI in highly colored lakes and in lakes where particulate matter is comprised of non-algal material (like dissolved organic matter and sediment)
+* *Total phosphorus (TP)*, a nutrient essential for growth of primary producers. Assumptions: phosphorus is the limiting nutrient for phytoplankton growth (this assumption often holds only for summer months) (when P is high, lots of nutrient for primary production)
 
 $TSI(Chl) = 10(6 - (2.04 - 0.68 ln Chl/ln 2))$
 
@@ -115,8 +123,8 @@ LAGOStrophic <-
          gnis_name, lake_area_ha, state, state_name) %>%
   mutate(sampleyear = year(sampledate), 
          samplemonth = month(sampledate), 
-         season = as.factor(quarter(sampledate, fiscal_start = 12))) %>%
-  drop_na(chla:secchi)
+         season = as.factor(quarter(sampledate, fiscal_start = 12))) %>% #divide year into quarters, start in month 12 so first season is dec, jan, feb. Second quarter will be march, apr, may
+  drop_na(chla:secchi) #chla, tp, and secchi. If NA in any of those rows, remove entire row
 
 levels(LAGOStrophic$season) <- c("Winter", "Spring", "Summer", "Fall")
 ```
@@ -138,6 +146,7 @@ ggplot(LAGOStrophic,
   labs(x = "Month", y = "Secchi depth (m)", color = "Year") +
   scale_color_viridis_c(option = "magma")
 print(secchibymonth)
+#secchi depth has an inverse relationship to cholorphylla
 
 tpbymonth <- 
 ggplot(LAGOStrophic, 
@@ -150,7 +159,7 @@ print(tpbymonth)
 
 What do you notice about the seasonality of these variables? If we were to characterize a lake based on the value of a given variable, how might seasonality affect our interpretations?
 
->
+> Phosphate is dissolved - readily available. Particulate phosphorus is not readily available, but both are being measured. Phosphorus increases in the summer - chlorophyll needs P in summer. More sampling points in the summer. 
 
 ### Calculating trophic state index
 Let's add a TSI value calculated from each of the three variables to the data frame. Let's also add a column that designates the lake as oligotrophic, mesotrophic, eutrophic, or hypereutrophic based on the TSI.chl value. Make notes about the code as we go along.
@@ -164,6 +173,10 @@ LAGOStrophic <-
             ifelse(TSI.chl < 40, "Oligotrophic", 
                    ifelse(TSI.chl < 50, "Mesotrophic",
                           ifelse(TSI.chl < 70, "Eutrophic", "Hypereutrophic"))))
+#adding columns by using equation for TSI for each 
+#log means natural log (log10 is real log)
+#chain of ifelse statements
+#ideally all TSI numbers should be the same regardless of index you used, but there is just naturally variability between the three
 
 LAGOStrophic$trophic.class <- 
   factor(LAGOStrophic$trophic.class,
