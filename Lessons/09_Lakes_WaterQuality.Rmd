@@ -244,15 +244,21 @@ stateTSIjitter <- ggplot(LAGOStrophic, aes(x = state, y = TSI.chl, color = seaso
   theme(legend.position = "top") +
   scale_color_viridis_d(option = "magma")
 print(stateTSIjitter)
+#geom_rect visualizes the different trophic states
 
 ```
 What insights do we gain from the different visualizations?
 
-> Violin: 
+> Violin: good for range
 
-> Bar: 
+> Bar: good for counts, and separates into trophic state
 
-> Jitter:
+> Jitter:can see seasonality and when they sample
 
 ## Closing Discussion
 What factors might you expect to influence TSI scores in a given area? What are some variables in the LAGOSNE database that could help you test your hypothesis?
+
+```{r}
+write.csv(LAGOStrophic, file = "./Data/Processed/LAGOStrophic.csv", row.names=FALSE)
+```
+
