@@ -50,11 +50,11 @@ LAGOStrophic <- mutate(LAGOStrophic,
             trophic.class.secchi = 
               ifelse(TSI.secchi < 40, "Oligotrophic", 
                    ifelse(TSI.secchi < 50, "Mesotrophic",
-                          ifelse(TSI.secchi < 70, "Eutrophic", "Hypereutrophic"))),
+                      ifelse(TSI.secchi < 70, "Eutrophic", "Hypereutrophic"))),
             trophic.class.tp = 
               ifelse(TSI.tp < 40, "Oligotrophic", 
                    ifelse(TSI.tp< 50, "Mesotrophic",
-                          ifelse(TSI.tp < 70, "Eutrophic", "Hypereutrophic")))
+                      ifelse(TSI.tp < 70, "Eutrophic", "Hypereutrophic")))
 )
 
 
@@ -66,60 +66,36 @@ LAGOStrophic <- mutate(LAGOStrophic,
 
 ```{r}
 
+chla.count <- count(LAGOStrophic, trophic.class, name="Chla")
+secchi.count <- count(LAGOStrophic, trophic.class.secchi, name="secchi")
+tp.count <- count(LAGOStrophic, trophic.class.tp, name="tp")
 
-#I tried for about an hour to do a loop or lapply table, but could not get it
+class.list <- cbind(chla.count, secchi.count, tp.count) %>%
+  select(trophic.class, Chla, secchi, tp)
 
+colnames(class.list)[1] <- "class"
 
-filter(LAGOStrophic, trophic.class == "Oligotrophic") %>%
-  count(name="Oligotrophic")
-filter(LAGOStrophic, trophic.class.secchi == "Oligotrophic") %>%
-  count(name="Oligotrophic")
-filter(LAGOStrophic, trophic.class.tp == "Oligotrophic") %>%
-  count(name="Oligotrophic")
-
-Oligotrophic <- c(3298,16110,19861)
-
-filter(LAGOStrophic, trophic.class == "Mesotrophic") %>%
-  count(name="Mesotrophic")
-filter(LAGOStrophic, trophic.class.secchi == "Mesotrophic") %>%
-  count(name="Mesotrophic")
-filter(LAGOStrophic, trophic.class.tp == "Mesotrophic") %>%
-  count(name="Mesotrophic")
-
-Mesotrophic <- c(15413,25083,23023)
-
-filter(LAGOStrophic, trophic.class == "Eutrophic") %>%
-  count(name="Eutrophic")
-filter(LAGOStrophic, trophic.class.secchi == "Eutrophic") %>%
-  count(name="Eutrophic")
-filter(LAGOStrophic, trophic.class.tp == "Eutrophic") %>%
-  count(name="Eutrophic")
-
-Eutrophic <- c(41861,28659,24839)
-
-filter(LAGOStrophic, trophic.class == "Hypereutrophic") %>%
-  count(name="Hypereutrophic")
-filter(LAGOStrophic, trophic.class.secchi == "Hypereutrophic") %>%
-  count(name="Hypereutrophic")
-filter(LAGOStrophic, trophic.class.tp == "Hypereutrophic") %>%
-  count(name="Hypereutrophic")
-
-Hypereutrophic <- c(14379,5099,7228)
-
-class.list <- data.frame(Oligotrophic, Mesotrophic, Eutrophic, Hypereutrophic, row.names=c("trophic.class", "trophic.class.secchi", "trophic.class.tp"))
+print(class.list)
 
 ```
 
 7. What proportion of total observations are considered eutrohic or hypereutrophic according to the three different metrics (trophic.class, trophic.class.secchi, trophic.class.tp)?
 
 ```{r}
-proportion <- class.list %>% 
-  summarise(EorH = sum(Eutrophic,Hypereutrophic))
+trophic.class.proportion <- sum(class.list$Chla[3:4])/sum(class.list$Chla)
+trophic.class.proportion
+
+trophic.class.sechhi.proportion <- sum(class.list$secchi[3:4])/sum(class.list$secchi)
+trophic.class.sechhi.proportion
+
+trophic.class.tp.proportion <- sum(class.list$tp[3:4])/sum(class.list$tp)
+trophic.class.tp.proportion
+
 ```
 
 Which of these metrics is most conservative in its designation of eutrophic conditions? Why might this be?
 
-> 
+> Secchi disk is the most conservative in its designation of eutrophic conditions. This is likely because this is done with human hands and eyes, and so collection and observation can vary largely on the person performing the task. It is probably the least precise out of the three TSI indexes. We know it is the most conservative because it has the lowest proportion of points labeled either hypereutrophic or eutrophic, indicating that fewer samples would be considered those if the TSI index was based on secchi readings.
 
 Note: To take this further, a researcher might determine which trophic classes are susceptible to being differently categorized by the different metrics and whether certain metrics are prone to categorizing trophic class as more or less eutrophic. This would entail more complex code.
 
@@ -169,14 +145,16 @@ Which states have the highest and lowest concentration ranges?
 10. Create two jitter plots comparing TN and TP concentrations across states, with samplemonth as the color. Choose a color palette other than the ggplot default.
 
 ```{r}
-TNstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tn, color = samplemonth)) +
+TNstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tn, 
+                                         color = samplemonth)) +
   geom_jitter(alpha = 0.3) +
   labs(x = "", y = "Total nitrogen") +
   theme(legend.position = "top") +
   scale_color_viridis_c(option = "viridis")
 print(TNstate.jitter)
 
-TPstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tp, color = samplemonth)) +
+TPstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tp, 
+                                         color = samplemonth)) +
   geom_jitter(alpha = 0.3) +
   labs(x = "", y = "Total phosphorus") +
   theme(legend.position = "top") +
