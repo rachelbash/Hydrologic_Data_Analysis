@@ -124,14 +124,16 @@ LAGOSNandP <- LAGOStrophic %>%
 ```{r}
 TNstate.violin <- ggplot(LAGOSNandP, aes(x=state, y=tn)) +
   geom_violin(draw_quantiles=0.5) +
-  ggtitle("Total Nitrogen concentrations by state")
+  ggtitle("Total Nitrogen concentrations by state") +
+  labs(y=(expression("Total Nitrogen ("*mu*"g/l)")), x="")
 print(TNstate.violin)
 
 
 
 TPstate.violin <- ggplot(LAGOSNandP, aes(x=state, y=tp)) +
   geom_violin(draw_quantiles=0.5)+
-  ggtitle("Total Phosphorus concentrations by state")
+  ggtitle("Total Phosphorus concentrations by state") +
+  labs(y=(expression("Total Phosphorus ("*mu*"g/l)")), x="")
 print(TPstate.violin)
 
 #tapply(LAGOSNandP$tn,LAGOSNandP$state,median)
@@ -157,7 +159,7 @@ Which states have the highest and lowest concentration ranges?
 TNstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tn, 
                                          color = samplemonth)) +
   geom_jitter(alpha = 0.3) +
-  labs(x = "", y = "Total nitrogen") +
+  labs(x = "", y=(expression("Total Nitrogen ("*mu*"g/l)"))) +
   theme(legend.position = "top") +
   scale_color_viridis_c(option = "viridis")
 print(TNstate.jitter)
