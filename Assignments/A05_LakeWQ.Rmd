@@ -1,11 +1,18 @@
 ---
-title: "Assignment 5: Water Quality in Lakes"
+title: 'Assignment 5: Water Quality in Lakes'
 author: "Rachel Bash"
-output: pdf_document
 geometry: margin=2.54cm
-editor_options: 
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
   chunk_output_type: console
 ---
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE) 
+```
 
 ## OVERVIEW
 
@@ -35,9 +42,12 @@ library(lubridate)
 library(LAGOSNE)
 
 theme_set(theme_classic())
+options(scipen = 100)
 
-load(file = "./Data/Raw/LAGOSdata.rda")
-LAGOStrophic <- read.csv("./Data/Processed/LAGOStrophic.csv")
+LAGOSdata <- lagosne_load()
+names(LAGOSdata)
+
+LAGOStrophic <- read.csv("../Data/Processed/LAGOStrophic.csv")
 
 ```
 
@@ -124,10 +134,9 @@ TPstate.violin <- ggplot(LAGOSNandP, aes(x=state, y=tp)) +
   ggtitle("Total Phosphorus concentrations by state")
 print(TPstate.violin)
 
-tapply(LAGOSNandP$tn,LAGOSNandP$state,median)
-tapply(LAGOSNandP$tp,LAGOSNandP$state,median)
+#tapply(LAGOSNandP$tn,LAGOSNandP$state,median)
 
-tapply(LAGOSNandP$tn, LAGOSNandP$state,summary)
+#tapply(LAGOSNandP$tn, LAGOSNandP$state,summary)
 ```
 
 Which states have the highest and lowest median concentrations?
