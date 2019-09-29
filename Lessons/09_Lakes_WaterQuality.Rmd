@@ -119,7 +119,7 @@ class(LAGOSnutrient$sampledate)
 
 LAGOStrophic <- 
   left_join(LAGOSnutrient, LAGOSlocations, by = "lagoslakeid") %>%
-  select(lagoslakeid, sampledate, chla, tp, secchi, 
+  select(lagoslakeid, sampledate, chla, tp, tn, secchi, 
          gnis_name, lake_area_ha, state, state_name) %>%
   mutate(sampleyear = year(sampledate), 
          samplemonth = month(sampledate), 

@@ -1,6 +1,6 @@
 ---
 title: "Assignment 5: Water Quality in Lakes"
-author: "Student Name"
+author: "Rachel Bash"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,6 +28,16 @@ The completed exercise is due on 2 October 2019 at 9:00 am.
 4. Load the LAGOSdata database and the trophic state index csv file we created on 2019/09/27.
 
 ```{r setup}
+getwd()
+
+library(tidyverse)
+library(lubridate)
+library(LAGOSNE)
+
+theme_set(theme_classic())
+
+load(file = "./Data/Raw/LAGOSdata.rda")
+LAGOStrophic <- read.csv("./Data/Processed/LAGOStrophic.csv")
 
 ```
 
@@ -36,6 +46,18 @@ The completed exercise is due on 2 October 2019 at 9:00 am.
 5. Similar to the trophic.class column we created in class (determined from TSI.chl values), create two additional columns in the data frame that determine trophic class from TSI.secchi and TSI.tp (call these trophic.class.secchi and trophic.class.tp). 
 
 ```{r}
+LAGOStrophic <- mutate(LAGOStrophic,
+            trophic.class.secchi = 
+              ifelse(TSI.secchi < 40, "Oligotrophic", 
+                   ifelse(TSI.secchi < 50, "Mesotrophic",
+                          ifelse(TSI.secchi < 70, "Eutrophic", "Hypereutrophic"))),
+            trophic.class.tp = 
+              ifelse(TSI.tp < 40, "Oligotrophic", 
+                   ifelse(TSI.tp< 50, "Mesotrophic",
+                          ifelse(TSI.tp < 70, "Eutrophic", "Hypereutrophic")))
+)
+
+
 
 ```
 
@@ -44,12 +66,55 @@ The completed exercise is due on 2 October 2019 at 9:00 am.
 
 ```{r}
 
+
+#I tried for about an hour to do a loop or lapply table, but could not get it
+
+
+filter(LAGOStrophic, trophic.class == "Oligotrophic") %>%
+  count(name="Oligotrophic")
+filter(LAGOStrophic, trophic.class.secchi == "Oligotrophic") %>%
+  count(name="Oligotrophic")
+filter(LAGOStrophic, trophic.class.tp == "Oligotrophic") %>%
+  count(name="Oligotrophic")
+
+Oligotrophic <- c(3298,16110,19861)
+
+filter(LAGOStrophic, trophic.class == "Mesotrophic") %>%
+  count(name="Mesotrophic")
+filter(LAGOStrophic, trophic.class.secchi == "Mesotrophic") %>%
+  count(name="Mesotrophic")
+filter(LAGOStrophic, trophic.class.tp == "Mesotrophic") %>%
+  count(name="Mesotrophic")
+
+Mesotrophic <- c(15413,25083,23023)
+
+filter(LAGOStrophic, trophic.class == "Eutrophic") %>%
+  count(name="Eutrophic")
+filter(LAGOStrophic, trophic.class.secchi == "Eutrophic") %>%
+  count(name="Eutrophic")
+filter(LAGOStrophic, trophic.class.tp == "Eutrophic") %>%
+  count(name="Eutrophic")
+
+Eutrophic <- c(41861,28659,24839)
+
+filter(LAGOStrophic, trophic.class == "Hypereutrophic") %>%
+  count(name="Hypereutrophic")
+filter(LAGOStrophic, trophic.class.secchi == "Hypereutrophic") %>%
+  count(name="Hypereutrophic")
+filter(LAGOStrophic, trophic.class.tp == "Hypereutrophic") %>%
+  count(name="Hypereutrophic")
+
+Hypereutrophic <- c(14379,5099,7228)
+
+class.list <- data.frame(Oligotrophic, Mesotrophic, Eutrophic, Hypereutrophic, row.names=c("trophic.class", "trophic.class.secchi", "trophic.class.tp"))
+
 ```
 
 7. What proportion of total observations are considered eutrohic or hypereutrophic according to the three different metrics (trophic.class, trophic.class.secchi, trophic.class.tp)?
 
 ```{r}
-
+proportion <- class.list %>% 
+  summarise(EorH = sum(Eutrophic,Hypereutrophic))
 ```
 
 Which of these metrics is most conservative in its designation of eutrophic conditions? Why might this be?
@@ -63,70 +128,117 @@ Note: To take this further, a researcher might determine which trophic classes a
 8. Create a data frame that includes the columns lagoslakeid, sampledate, tn, tp, state, and state_name. Mutate this data frame to include sampleyear and samplemonth columns as well. Call this data frame LAGOSNandP. 
 
 ```{r}
-
+LAGOSNandP <- LAGOStrophic %>%
+  select(lagoslakeid, sampledate, tn, tp, state, state_name) %>%
+  mutate(sampleyear = year(sampledate)) %>%
+  mutate(samplemonth = month(sampledate))
 ```
 
 9. Create two violin plots comparing TN and TP concentrations across states. Include a 50th percentile line inside the violins.
 ```{r}
+TNstate.violin <- ggplot(LAGOSNandP, aes(x=state, y=tn)) +
+  geom_violin(draw_quantiles=0.5) +
+  ggtitle("Total Nitrogen concentrations by state")
+print(TNstate.violin)
 
+
+
+TPstate.violin <- ggplot(LAGOSNandP, aes(x=state, y=tp)) +
+  geom_violin(draw_quantiles=0.5)+
+  ggtitle("Total Phosphorus concentrations by state")
+print(TPstate.violin)
+
+tapply(LAGOSNandP$tn,LAGOSNandP$state,median)
+tapply(LAGOSNandP$tp,LAGOSNandP$state,median)
+
+tapply(LAGOSNandP$tn, LAGOSNandP$state,summary)
 ```
 
 Which states have the highest and lowest median concentrations?
 
-> TN:
+> TN: Iowa has the highest, Wisconsin has the lowest
 
-> TP:
+> TP: Illinois has the highest, Wisconsin has the lowest
 
 Which states have the highest and lowest concentration ranges?
 
-> TN: 
+> TN: Iowa has the biggest range, Wisconsin has the smallest range
 
-> TP: 
+> TP: Missouri has the biggest range, Michigan has the smallest range
 
 10. Create two jitter plots comparing TN and TP concentrations across states, with samplemonth as the color. Choose a color palette other than the ggplot default.
 
 ```{r}
+TNstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tn, color = samplemonth)) +
+  geom_jitter(alpha = 0.3) +
+  labs(x = "", y = "Total nitrogen") +
+  theme(legend.position = "top") +
+  scale_color_viridis_c(option = "viridis")
+print(TNstate.jitter)
+
+TPstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tp, color = samplemonth)) +
+  geom_jitter(alpha = 0.3) +
+  labs(x = "", y = "Total phosphorus") +
+  theme(legend.position = "top") +
+  scale_color_viridis_c(option = "viridis")
+print(TPstate.jitter)
 
 ```
 
 Which states have the most samples? How might this have impacted total ranges from #9?
 
-> TN:
+> TN: Iowa and Missouri have the most samples, as depicted by the number of points in the graph. Because Iowa seems to have the most amount of points, it is more likely that there will end up being greater variability among the possible points - making it most likely to have the biggest range.
 
-> TP: 
+> TP: Again, Iowa and Missouri have the most samples. Missouri has the largest range and the most amount of points, again showing that the more samples there are, the more tendency for greater variability in the data.
 
 Which months are sampled most extensively? Does this differ among states?
 
-> TN:
+> TN: The summer months are sampled the most extensively, with a little sampling in the early part and late part of each year. NY and PA have a lot of samples taken at the end of the year, while Missouri and Iowa have samples taken from the early part of the year and the summer. 
 
-> TP: 
+> TP: The summer months are sampled the most extensively. A lot of the eastern states, like NY, RI, PA, and CT all have samples taken later in the year (yellow color). Iowa and Missouri have most of their points taken from April to June. It looks like CT and PA have the biggest range of sample months - ranging from the beginning of the year (dark blue) to the end (yellow).
 
 11. Create two jitter plots comparing TN and TP concentrations across states, with sampleyear as the color. Choose a color palette other than the ggplot default.
 
 ```{r}
+TNstate.jitter.year <- ggplot(LAGOSNandP, aes(x = state, y = tn, 
+                                              color = sampleyear)) +
+  geom_jitter(alpha = 0.3) +
+  labs(x = "", y = "Total nitrogen") +
+  theme(legend.position = "top") +
+  scale_color_viridis_c(option = "magma")
+print(TNstate.jitter.year)
+
+TPstate.jitter.year <- ggplot(LAGOSNandP, aes(x = state, y = tp, 
+                                              color = sampleyear)) +
+  geom_jitter(alpha = 0.3) +
+  labs(x = "", y = "Total phosphorus") +
+  theme(legend.position = "top") +
+  scale_color_viridis_c(option = "magma")
+print(TPstate.jitter.year)
+
 
 ```
 
 
 Which years are sampled most extensively? Does this differ among states?
 
-> TN:
+> TN: Most samples were taken in the 2000s decade. MN and WI and CT have a fair amount of samples that were taken earlier, like in the 1980s. NY and MI and RI have samples taken in the 1990s. Iowa, with the most amount of samples, was almost exclusively taken in the 2000s.
 
-> TP: 
+> TP: There is a bit more variation in this one, but again most of the samples were taken in the 2000s. MO and NY have a good mixture of many decades, while MN and MI have most in the 1980s and 1990s respectively. It is interesting to notice that MN's lower values were taken in the 1980s, but any P levels above about 50 were taken in the 2000s or later. You can also see a similar time trend in CT, where values above 50 were taken before about 1990, but anything below 50 was sampled in the 2000s or later.
 
 ## Reflection
 12. What are 2-3 conclusions or summary points about lake water quality you learned through your analysis?
 
->
+> Year and time of year are important water quality measures that tell you a lot about the water system you are studying, especially as water quality measures change over time. You can glean all the information worth knowing from one plot; it is helpful to visualize the data in multiple ways to get the full picture. Lastly, a water quality parameter, such as trophic class, can change based on what you use to define it. 
 
 13. What data, visualizations, and/or models supported your conclusions from 12?
 
-> 
+> It was helpful to differentiate year and season changes with the different jitter plots produced. They both told a different story than the violin plots did. 
 
 14. Did hands-on data analysis impact your learning about water quality relative to a theory-based lesson? If so, how?
 
->
+> I am not sure I learned anything too new about water quality this lesson relative to what a theory-based lesson would have taught me. This assignment was more about the coding than water quality knowledge.
 
 15.	How did the real-world data compare with your expectations from theory?
 
->
+> I didn't expect there to be such a discrepancy in the number of samples taken by state. There are so few samples taken in Illinois than there are in Missouri, for example. I have to be careful with how strongly to draw conclusions based on this data, because a lot of information for certain states could be missing, which may be hiding the real story of the data.
