@@ -161,15 +161,17 @@ TNstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tn,
   geom_jitter(alpha = 0.3) +
   labs(x = "", y=(expression("Total Nitrogen ("*mu*"g/l)"))) +
   theme(legend.position = "top") +
-  scale_color_viridis_c(option = "viridis")
+  scale_color_viridis_c(option = "viridis", aes(color="Month"))+
+  ggtitle("Total Nitrogen Concentrations by State")
 print(TNstate.jitter)
 
 TPstate.jitter <- ggplot(LAGOSNandP, aes(x = state, y = tp, 
                                          color = samplemonth)) +
   geom_jitter(alpha = 0.3) +
-  labs(x = "", y = "Total phosphorus") +
+  labs(x = "", y=(expression("Total Phosphorus ("*mu*"g/l)"))) +
   theme(legend.position = "top") +
-  scale_color_viridis_c(option = "viridis")
+  scale_color_viridis_c(option = "viridis", aes(color="Month"))+
+  ggtitle("Total Phosphorus Concentrations by State")
 print(TPstate.jitter)
 
 ```
@@ -192,17 +194,19 @@ Which months are sampled most extensively? Does this differ among states?
 TNstate.jitter.year <- ggplot(LAGOSNandP, aes(x = state, y = tn, 
                                               color = sampleyear)) +
   geom_jitter(alpha = 0.3) +
-  labs(x = "", y = "Total nitrogen") +
+  labs(x = "", y=(expression("Total Nitrogen ("*mu*"g/l)"))) +
   theme(legend.position = "top") +
-  scale_color_viridis_c(option = "magma")
+  scale_color_viridis_c(option = "magma", aes(color="Year")) +
+  ggtitle("Total Nitrogen Concentrations by State")
 print(TNstate.jitter.year)
 
 TPstate.jitter.year <- ggplot(LAGOSNandP, aes(x = state, y = tp, 
                                               color = sampleyear)) +
   geom_jitter(alpha = 0.3) +
-  labs(x = "", y = "Total phosphorus") +
+  labs(x = "", y=(expression("Total Phosphorus ("*mu*"g/l)"))) +
   theme(legend.position = "top") +
-  scale_color_viridis_c(option = "magma")
+  scale_color_viridis_c(option = "magma", aes(color="Year"))+
+  ggtitle("Total Phosphorus Concentrations by State")
 print(TPstate.jitter.year)
 
 
