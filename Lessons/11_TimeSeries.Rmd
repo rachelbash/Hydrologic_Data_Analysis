@@ -39,6 +39,7 @@ Analysis of time series presents several opportunities. In aquatic sciences, som
 Time series datasets come with several caveats, which need to be addressed in order to effectively model the system. A few common challenges that arise (and can occur together within a single dataset) are: 
 
 * **Autocorrelation**: Data points are not independent from one another (i.e., the measurement at a given time point is dependent on previous time point(s))
+  - you can account for this in time series analysis
 * **Data gaps**: Data are not collected at regular intervals, necessitating *interpolation* between measurements.
 * **Seasonality**: Cyclic patterns in variables occur at regular intervals, impeding clear interpretation of a monotonic (unidirectional) trend.
 * **Heteroscedasticity**: The variance of the time series is not constant over time
@@ -76,6 +77,8 @@ ClearCreekPlot <-
   theme(plot.title = element_text(margin = margin(b = -10), size = 12), 
        axis.title.x = element_blank())
 print(ClearCreekPlot)
+#difference between cyclical and seasonal - cyclical can be supraseasonal time scales
+#very clear variance by season
 
 ```
 
@@ -89,6 +92,9 @@ ClearCreekRegressionPlot <-
   theme(plot.title = element_text(margin = margin(b = -10), size = 12), 
        axis.title.x = element_blank())
 print(ClearCreekRegressionPlot)
+#not very effective for this option
+#works better: something that eliminates seasonality
+#decompose data into annual means - then you are able to use linear regression
 ```
 
 Is a linear regression an appropriate model for the data in this case? Why or why not?
@@ -105,7 +111,7 @@ Are there situations where it would be appropriate to use a linear regression to
 A given time series can be made up of several component series: 
 
 1. A **seasonal** component, which repeats over a fixed known period (e.g., seasons of the year, months, days of the week, hour of the day)
-2. A **trend** component, which quantifies the upward or downward progression over time. The trend component of a time series does not have to be monotonic.
+2. A **trend** component, which quantifies the upward or downward progression over time. The trend component of a time series *does not have to be monotonic*.
 3. An **error** or **random** component, which makes up the remainder of the time series after other components have been accounted for. This component reflects the noise in the dataset. 
 4. (optional) A **cyclical** component, which repeats over periods greater than the seasonal component. A good example of this in hydrologic data is El Niño Southern Oscillation (ENSO) cycles, which occur over a period of 2-8 years.
 
@@ -113,19 +119,27 @@ We first need to turn the discharge data into a time series object in R. This is
 
 Note: time series objects must be equispaced, which requires interpolation if the data have not been collected at regular intervals. In our case, we have daily data with no NAs in the data frame, so we don't need to worry about this.
 ```{r}
-ClearCreek_ts <- ts(ClearCreekDischarge[[4]], frequency = 365)
+ClearCreek_ts <- ts(ClearCreekDischarge[[4]], frequency = 365) #can only provide one column of data
+#important about time series: there must be regularly spaced data! Step to each row must be the same each time.
+#if NA's, you would have to interpolation to fill in those gaps and maintain the equal steps between each row
+#if you want to see if there is a difference between days so you can tell whether you are missing dates, use this:
+table(diff(ClearCreekDischarge$Date))
+#this means that one is missing!
 
 ```
 
 The `stl` function decomposes the time series object into its component parts. We must specify that the window for seasonal extraction is either "periodic" or a specific number of at least 7. The decomposition proceeds through a loess (locally estimated scatterplot smoothing) function.
 
 ```{r}
-?stl
+?stl #take moving average along window
 # Generate the decomposition
 ClearCreek_Decomposed <- stl(ClearCreek_ts, s.window = "periodic")
 
 # Visualize the decomposed series. 
 plot(ClearCreek_Decomposed)
+#trend + seasonal + remainder = our data
+#trend is the moving average trend
+#remainder is all of the error that is not seasonal or trend related
 
 # We can extract the components and turn them into data frames
 ClearCreek_Components <- as.data.frame(ClearCreek_Decomposed$time.series[,1:3])
@@ -146,7 +160,7 @@ ggplot(ClearCreek_Components) +
   geom_line(aes(y = seasonal, x = Date), color = "#c13d75ff") +
   geom_hline(yintercept = 0, lty = 2) +
   ylab(expression("Discharge (ft"^3*"/s)"))
-
+#there are negative numbers, math is agnostic, doesn't make sense, but just accept that it is doing it correctly
 ```
 
 Note that the decomposition can yield negative values when we apply a seasonal adjustment or a trend adjustment to the data. The decomposition is not constrained by a lower bound of zero as discharge is in real life. Make sure to interpret with caution!

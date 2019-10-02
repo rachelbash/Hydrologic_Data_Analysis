@@ -61,9 +61,23 @@ Wrangle LAGOSdata so that you have a new data frame that includes TN, TP, your f
 ```{r}
 # Wrangle data here.
 
-LAGOSstate <- LAGOSdata$locus %>% select(lagoslakeid, state_zoneid)
+LAGOSstate <- LAGOSdata$state %>% select(state_zoneid, state_name)
+LAGOSlocus <- LAGOSdata$locus %>% select(lagoslakeid, state_zoneid, gnis_name)
 LAGOSepinutr <- LAGOSdata$epi_nutr %>% select(lagoslakeid, sampledate, chla, doc,tp,tn, secchi)
 LAGOSdepth <- LAGOSdata$lakes_limno %>% select(lagoslakeid, meandepth)
+
+LAGOSstatewrangled <-
+  left_join(LAGOSstate, LAGOSlocus, by = "state_zoneid")
+
+LAGOSskinny <-  
+  left_join(LAGOSepinutr, LAGOSstatewrangled, by = "lagoslakeid") 
+
+LAGOSwrangled <- 
+  left_join(LAGOSskinny, LAGOSdepth, by = "lagoslakeid") %>% 
+  mutate(sampleyear = year(sampledate), 
+         samplemonth = month(sampledate), 
+         season = as.factor(quarter(sampledate, fiscal_start = 12))) %>% 
+  drop_na(chla:secchi,meandepth)
 
 
 
@@ -74,22 +88,33 @@ Examine potential correlations among your predictor variables. If your predictor
 1. Create a correlation plot for your 7 variables of interest (TN, TP, and the five predictor variables). What patterns do you see? (hint: function `corrplot` in the corrplot package. I like to use `upper = "ellipse"` inside the function).
 
 ```{r}
+LAGOSwrangled.final <- LAGOSwrangled %>%
+  select(chla, doc, tp, tn, secchi, meandepth) %>%
+  na.omit()
 
+LAGOSwrangled.corr <- cor(LAGOSwrangled.final)
+corrplot(LAGOSwrangled.corr, upper = "ellipse")
 ```
 
 What patterns do you see?
 
->
+> tp and tn are moderately positively correlated with chla. tn is more positively correlated with doc than tp is. DOC and mean depth are strongly negatively correlated with each other, meaning that as DOC goes up, mean depth goes down. 
 
 2. Create two linear regression models (hint: function `lm`) to predict TN and TP using your five predictor variables. 
 
 ```{r}
+model1 <- lm(data=LAGOSwrangled, tn ~ chla + doc + secchi + meandepth + state_name)
+summary(model1)
 
+model2 <- lm(data=LAGOSwrangled, tp ~ chla + doc + secchi + meandepth + state_name)
+summary(model2)
+
+step(model1)
 ```
 
 How much variance in TN and TP is accounted for by your full model?
 
->
+> tn: only .3762 adjusted R2 value, not great.
 
 3. Calculate variance inflation factors (VIF) for each of the variables in both models (hint: `vif` function in the car package). VIF values exceeding 5-10 indicates an issue with multicollinearity for that variable. Note: you should evaluate VIF values separately for each model.
 
