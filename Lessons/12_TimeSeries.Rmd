@@ -38,6 +38,9 @@ LAGOSdata <- lagosne_load()
 
 Two types of trends may be present in our time series dataset: **monotonic** or **step**. Monotonic trends are a gradual shift over time that is consistent in direction, for example in response to land use change. Step trends are a distinct shift at a given time point, for example in response to a policy being enacted. 
 
+**monotonic**: inc or dec consistent trend over time. For examples, responses of nutrients in response to land use change.
+**step**: if policy were enacted, there would be a distinct shift at a given point
+
 ### Step trend analysis
 
 Step trend analysis works well for upstream/downstream and before/after study design. We will not delve into these methods during class, but specific tests are listed below for future reference. 
@@ -55,18 +58,18 @@ In general, detecting a monotonic trend requires a long sequence of data with fe
 
 Adjusting the data may be necessary to fulfill the assumptions of a trend test. These adjustments include **aggregation**, **subsampling**, and **interpolation**. What do each of these mean, and why might we want to use them?
 
-> aggregation: 
+> aggregation: daily turned to weekly or monthly. Useful when you want to average values across a month
 
-> subsampling: 
+> subsampling: if you have daily data one year, but another year you only have weekly data. you might want to subsample the daily data so that it matches the other part of your data set.
 
-> interpolation: 
+> interpolation: missing data points where you can fill those in by averaging the points around the missing row, or using an average monthly value. fill in gaps.
 
 Specific tests for monotonic trend analysis are listed below, with assumptions and tips: 
 
-* **linear regression**: no seasonality, fits the assumptions of a parametric test. Function: `lm`
-* **Mann-Kendall**: no seasonality, non-parametric, no temporal autocorrelation, missing data allowed. Function: `mk.test` (package: trend)
-* **modified Mann-Kendall**: no seasonality, non-parametric, accounts for temporal autocorrelation, missing data allowed. Function: `mmky` and `mmkh` (package: modifiedmk)
-* **Seasonal Mann-Kendall**: seasonality, non-parametric, no temporal autocorelation, identical distribution. Function: `smk.test` (package: trend)
+* **linear regression**: no seasonality, fits the assumptions of a parametric test. well approximated by a normal distrubtion. Function: `lm`
+* **Mann-Kendall**: assumes no seasonality, non-parametric, no temporal autocorrelation, missing data allowed. Function: `mk.test` (package: trend)
+* **modified Mann-Kendall**: no seasonality, non-parametric, *accounts for temporal autocorrelation*, missing data allowed. Function: `mmky` and `mmkh` (package: modifiedmk). incorporate autocorrelation into model.
+* **Seasonal Mann-Kendall**: seasonality, non-parametric, no temporal autocorelation, identical distribution. Function: `smk.test` (package: trend). needs exact frequency between every data point (e.g. every 14 days)
 
 The packages trend, Kendall, and modifiedmk also include other modifications to monotonic trend tests. Look into the documentation for these packages if you are applying a special case.
 
@@ -89,7 +92,7 @@ lake_info(name = "Lake Mendota", state = "Wisconsin")
 # Wrangle a dataset with just Lake Mendota TP time series
 Mendotadata <- LAGOSnutrient %>%
   filter(lagoslakeid == 5371) %>%
-  select(sampledate, tp)
+  select(sampledate, tp) #dates are not stored chronologically, must deal with eventually
 
 # What do these data look like?
 MendotaTP <-
@@ -125,14 +128,16 @@ We see that TP data were collected somewhere between biweekly and monthly across
 
 Common interpolation methods: 
 
-* **Piecewise constant**: <fill in notes here>
-* **Linear**: <fill in notes here>
-* **Spline**: <fill in notes here>
+* **Piecewise constant**: nearest neighbor 
+* **Linear**: average the points around it to get the mean
+* **Spline**: piecewise polynomial function. more robust. draw smooth curves across data points
 
 Linear interpolation is most common for water quality data, and fits with our understanding about how TP might change over time in this system. 
 ```{r}
 # Generate monthly values from July 1988 to August 2013
-linearinterpolation <- as.data.frame(approx(Mendotadata, n = 303, method = "linear"))
+linearinterpolation <- as.data.frame(approx(Mendotadata, n = 303, method = "linear")) #how many months do you want it to generate? n=303 months from july 1988 thru aug 2013
+#approx gives us interpolation
+#x used to be dates, now its some strange number (number of days since Jan 1 of 1970)
 linearinterpolation$x <- as.Date(linearinterpolation$x, origin = "1970-01-01")
 names(linearinterpolation) <- c("Date", "TP")
 
@@ -143,22 +148,30 @@ ggplot(Mendotadata, aes(x = sampledate, y = tp)) +
   geom_line() +
   geom_point(data = linearinterpolation, aes(x = Date, y = TP), color = "#c13d75ff") 
 print(MendotaTPinterpolated)
+#new interpolated points are in pink. they will never go above or below the actual data, which is good
 
 # Generate time series (smk.test needs ts, not data.frame)
 Mendotatimeseries <- ts(linearinterpolation$TP, frequency = 12, 
                         start = c(1988, 7, 5), end = c(2013, 8, 5))
+#frequency is 12 months (12 seasons), with start in July, 5th
+#you don't have to throw data away if you are starting in the middle of the year
+
 # Run SMK test
 Mendotatrend <- smk.test(Mendotatimeseries)
 
-# Inspect results
-Mendotatrend
+# Inspect results: two different way
+Mendotatrend #overall trend. p > 0.05 not significant, no overall trend upward or downward in the data
+#z score gives us direction and magnitude of significance. So its negative, but its magnitude is not high enough
+#S counts up total magnitude of shift over time. counts up difference between points
 summary(Mendotatrend)
+#tests separately by month
+#october and nov have significant p values, with neg trend in both
 
 ```
 
 What would we conclude based on these findings? Describe as you would to an educated but non-specialist audience.
 
->
+> Overall, there is no significant positive or negative trend in tp over the 34 years, however there is a significant negative trend in tp in oct and nov.
  
 If a significant trend was present, we could compute a **Sen's Slope** to quantify that trend (`sens.slope` function in the trend package).
  
@@ -185,23 +198,24 @@ names(ClearCreekDischarge)[4:5] <- c("Discharge", "Approval.Code")
 ClearCreekDischarge.Monthly <- ClearCreekDischarge %>%
   mutate(Year = year(Date), 
          Month = month(Date)) %>%
-  group_by(Year, Month) %>%
+  group_by(Year, Month) %>% #group by both b/c you want one value for each individual month across that dataset
   summarise(Discharge = mean(Discharge))
     
-ClearCreek_ts <- ts(ClearCreekDischarge.Monthly[[3]], frequency = 12)
+ClearCreek_ts <- ts(ClearCreekDischarge.Monthly[[3]], frequency = 12) #column 3 has a frequency of 12
 
 ```
 
 ARMA models require stationary data. This means that there is no monotonic trend over time and there is also equal variance and covariance across the time series. The function `adf.test` will determine whether our data are stationary. The null hypothesis is that the data are not stationary, so we infer that the data are stationary if the p-value is < 0.05.
 
 ```{r}
-adf.test(ClearCreek_ts, alternative = "stationary")
+adf.test(ClearCreek_ts, alternative = "stationary") #our p-value < 0.05 so data is stationary
 ```
 
 Let's inspect the ACF and pacf plots. Notice these don't match up perfectly with just one AR or MA formulation, so we likely have interactions of both processes at play. 
 ```{r}
 acf(ClearCreek_ts)
 pacf(ClearCreek_ts)
+#which one matches the data? 
 ```
 
 While some processes might be easy to identify, it is often complicated to predict the order of AR and MA processes when the operate in the same dataset. To get around this issue, we will run multiple potential formulations of the model and see which one results in the most parsimonious fit using AIC. The function `auto.arima` does this automatically.
@@ -209,6 +223,8 @@ While some processes might be easy to identify, it is often complicated to predi
 ```{r}
 # run the arima function and search for best fit 
 auto.arima(ClearCreek_ts, trace = TRUE)
+#AIC characterizes how well the model fits the data
+#trace=true shows which models it is testing
 
 # create an object that defines the best fit model
 fit <- arima(ClearCreek_ts, c(1, 0, 1),seasonal = list(order = c(2, 1, 0), period = 12))
@@ -221,3 +237,5 @@ ts.plot(ClearCreek_ts, ClearCreekprediction$pred, lty = c(1, 3))
 ```
 
 How do future predictions compare to the past? What other covariates might you bring into the analysis to improve forecasting capabilities?
+
+>could use co-variance to improve forecasting 
