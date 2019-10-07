@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6: Time Series Analysis"
-author: "Student Name"
+author: "Rachel Bash"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -28,6 +28,16 @@ The completed exercise is due on 11 October 2019 at 9:00 am.
 4. Load the ClearCreekDischarge.Monthly.csv file from the processed data folder. Call this data frame ClearCreekDischarge.Monthly.
 
 ```{r setup}
+getwd()
+
+library(tidyverse)
+library(lubridate)
+library(dataRetrieval)
+library(trend)
+
+theme_set(theme_classic())
+
+ClearCreekDischarge.Monthly <- read.csv("./Data/Processed/ClearCreekDischarge.Monthly.csv")
 
 ```
 
@@ -38,14 +48,33 @@ The completed exercise is due on 11 October 2019 at 9:00 am.
 8. Decompose the time series using the `stl` function.
 9. Visualize the decomposed time series.
 ```{r}
+Enodischarge <- readNWISdv(siteNumbers = "02085070",
+                     parameterCd = "00060", # discharge (ft3/s)
+                     startDate = "",
+                     endDate = "")
+names(Enodischarge)[4:5] <- c("Discharge", "Approval.Code")
+
+Enodischarge.plot <- ggplot(data=Enodischarge, aes(x=Date, y= Discharge)) +
+  geom_line(aes(x=Date, y= Discharge)) +
+  labs(x = "Year", y = expression("Discharge (ft"^3*"/s)"))
+print(Enodischarge.plot)
+
+table(diff(Enodischarge$Date)) #there is technically a gap in the daily data, 
+#it looks like there is only one
+
+Eno.ts <- ts(Enodischarge[[4]], frequency=365)
+Eno.decomposed <- stl(Eno.ts, s.window = "periodic")
+plot(Eno.decomposed)
+
+
 
 ```
 
 10. How do the seasonal and trend components of the decomposition compare to the Clear Creek discharge dataset? Are they similar in magnitude?
 
-> Seasonal: 
+> Seasonal: The seasonal component plots a lot "thicker" meaning that there is more variability in how the seasonality of the river exhibits itself. This is likely because this system is rain-dominated, which is more variable than Clear Creek, which is snow-dominated, and has a much clearer seasonal pattern where snow melts in late spring.
 
-> Trend: 
+> Trend: Clear Creek and Eno's trend components look pretty similar, with varied upward and downward trends throughout the dataset. Clear Creek has a bigger y-axis range than the Eno trend y-axis, perhaps meaning that there are slightly bigger trends throughout the date range.
 
 ## Trend Analysis
 Research question: Has there been a monotonic trend in discharge in Clear Creek over the period of study?
@@ -53,30 +82,36 @@ Research question: Has there been a monotonic trend in discharge in Clear Creek 
 11. Generate a time series of monthly discharge in Clear Creek from the ClearCreekDischarge.Monthly data frame. This time series should include just one column (discharge). 
 12. Run a Seasonal Mann-Kendall test on the monthly discharge data. Inspect the overall trend and the monthly trends. 
 ```{r}
+ClearCreek.ts <- ts(ClearCreekDischarge.Monthly$Discharge, frequency = 12, 
+                        start = c(1975,10,1), end = c(2019,10,1))
 
+ClearCreektrend <- smk.test(ClearCreek.ts)
+
+ClearCreektrend
+summary(ClearCreektrend)
 ```
 
 13. Is there an overall monotonic trend in discharge over time? If so, is it positive or negative?
 
-> 
+> Yes, there is a significant overall monotonic trend in discharge over time. It is a positive trend, meaning discharge is significantly increasing over time. We can tell by the z-score, which quantifies the direction and magnitude of the trend. 
 
 14. Are there any monthly monotonic trends in discharge over time? If so, during which months do they occur and are they positive or negative?
 
-> 
+> Yes, there are two months that have significant monotonic trends -- March and April. Both are positive trends. This makes sense that these are the two significant months because these are the months when the most discharge is likely occuring due to the melting snowpack. 
 
 ## Reflection
 15. What are 2-3 conclusions or summary points about time series you learned through your analysis?
 
->
+> There is a difference between seasonal and trend components over time, and there is also inherent unexplained variability that cannot be explained by the seasonal or trend components. I also learned that you cannot only determine trends with linear regression, especially with datasets with a lot of years.
 
 16. What data, visualizations, and/or models supported your conclusions from 12?
 
-> 
+> The plot that decomposed the time series helped me make sense of time series and the different components of it.
 
 17. Did hands-on data analysis impact your learning about time series relative to a theory-based lesson? If so, how?
 
->
+> Yes, I understand timeseries better since I've done one myself, rather than reading from a book about it.
 
 18.	How did the real-world data compare with your expectations from theory?
 
->
+> I liked seeing the real-world data and understanding that all systems are different. Many rivers may have seasonality, but they exhibit seasonality differently from each other.
