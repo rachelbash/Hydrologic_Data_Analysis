@@ -7,6 +7,9 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE) 
+```
 ## OVERVIEW
 
 This exercise accompanies the lessons in Hydrologic Data Analysis on time series analysis
@@ -37,7 +40,8 @@ library(trend)
 
 theme_set(theme_classic())
 
-ClearCreekDischarge.Monthly <- read.csv("./Data/Processed/ClearCreekDischarge.Monthly.csv")
+ClearCreekDischarge.Monthly <- 
+  read.csv("../Data/Processed/ClearCreekDischarge.Monthly.csv")
 
 ```
 
@@ -60,7 +64,7 @@ Enodischarge.plot <- ggplot(data=Enodischarge, aes(x=Date, y= Discharge)) +
 print(Enodischarge.plot)
 
 table(diff(Enodischarge$Date)) #there is technically a gap in the daily data, 
-#it looks like there is only one
+#it looks like there is only one, so I will ignore it
 
 Eno.ts <- ts(Enodischarge[[4]], frequency=365)
 Eno.decomposed <- stl(Eno.ts, s.window = "periodic")
@@ -72,7 +76,7 @@ plot(Eno.decomposed)
 
 10. How do the seasonal and trend components of the decomposition compare to the Clear Creek discharge dataset? Are they similar in magnitude?
 
-> Seasonal: The seasonal component plots a lot "thicker" meaning that there is more variability in how the seasonality of the river exhibits itself. This is likely because this system is rain-dominated, which is more variable than Clear Creek, which is snow-dominated, and has a much clearer seasonal pattern where snow melts in late spring.
+> Seasonal: The seasonal component of the Eno discharge dataset plots a lot "thicker" meaning that there is more variability in how the seasonality of the river exhibits itself. This is likely because this system is rain-dominated, which is more variable than Clear Creek, which is snow-dominated, and has a much clearer seasonal pattern where snow melts in late spring.
 
 > Trend: Clear Creek and Eno's trend components look pretty similar, with varied upward and downward trends throughout the dataset. Clear Creek has a bigger y-axis range than the Eno trend y-axis, perhaps meaning that there are slightly bigger trends throughout the date range.
 
