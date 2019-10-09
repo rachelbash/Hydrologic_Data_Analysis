@@ -17,7 +17,7 @@ editor_options:
 
 High frequency data is usually defined as frequencies significantly lower than daily (e.g. 5-minute, 15-minute, 1 hr etc). What types of hydrological and biological processes happen on this timescale that we might want to investigate?
 
->
+> Discharge (storm events) Oxygen content changes throughout the day; sediment transport; temp changes; contaminant transport;
 
 
 ## Session Set Up
@@ -35,6 +35,7 @@ theme_set(theme_classic(base_size = 12))
 
 ## Pull Data
 
+Still from USGS, but this time readNWISuv = instantaneous values
 ```{r download data}
 
 dischargedatTFC2018 <- readNWISuv(
@@ -43,7 +44,9 @@ dischargedatTFC2018 <- readNWISuv(
   startDate = "2018-01-01", 
   endDate = "2019-01-01"
   ) %>% 
-  renameNWISColumns()
+  renameNWISColumns() #automatically renamed values based on the NWIS database definitions (they already know)
+#the date column is a POSIXct type of variable, not date. Because it is also storing time. 
+#the universal time zone is from Greenwich. 
 
 
 dischargedatEC2018 <- readNWISuv(
@@ -53,6 +56,7 @@ dischargedatEC2018 <- readNWISuv(
   endDate = "2019-01-01"
   ) %>% 
   renameNWISColumns()
+
 
 
 plot_grid(
@@ -68,11 +72,14 @@ plot_grid(
 )
           
 
+#we are separating baseflow and quickflow.
+#baseflow follows all the troughs of the storm peaks
+#quickflow is all the peaks
 ```
 
 The shape and size of river hydrographs following rain events can tell us how water moves through a watershed. Once rain falls, how does water get to a stream? What would the streamflow do?
 
->
+> overland flow, groundwater, fall in river channel
 
 
 _"Hydrograph separation is one of the most desperate analysis techniques in use in hydrology" - Hewlett & Hibbert 1967_
@@ -81,11 +88,12 @@ _"Hydrograph separation is one of the most desperate analysis techniques in use 
 ```{r baseflowseparation}
 TFCbaseflow <- BaseflowSeparation(
   dischargedatTFC2018$Flow_Inst, 
-  filter_parameter = 0.925, 
-  passes = 3
+  filter_parameter = 0.925, #default parameter
+  passes = 3 #default parameter
   )
+#gives us two columns: bt(baseflow time series) and qft (quickflow time series)
 
-TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow)
+TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow) #adding back in dates
 
 ggplot(TFC2018, aes(x = dateTime, y = Flow_Inst)) + 
   geom_line() +
@@ -101,28 +109,67 @@ dygraph(
     )
   ) %>% 
   dyRangeSelector()
+#baseflow: comes slower, from groundwater that percolates and then eventually makes its way through soil into the stream
+#quickflow is the first water in the storm - overland flow
 
 Export <- TFC2018 %>%
-  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_),
-         baseflowexport = bt * timestep,
+  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_), #what is time difference in between each of these time stamps? dateTime is in POSIXct format. as.numeric changes it to the number of seconds between two time stamps. added NA value added at end because a difference gives us one less point.
+         baseflowexport = bt * timestep, #volume = rate (bt) x time
          quickflowexport = qft * timestep) %>%
-  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T),
+  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T), #sum of all volume over the year
             QuickflowExport_cf = sum(quickflowexport, na.rm = T),
             TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+
+#export shows the total amount of water exported from the stream
   
 ```
 
 What percentage of water is exported from this watershed as baseflow? What percentage as quickflow?
 
-> 
+> 51.9% exported as baseflow and 48.1% exported as quickflow
+
+```{r}
+Export$BaseflowExport_cf/Export$TotalExport_cf
+
+1-(Export$BaseflowExport_cf/Export$TotalExport_cf)
+
+```
+
 
 Repeat this analysis for Ellerbe Creek. How do the percentages compare?
 
->
+
+```{r}
+ECbaseflow <- BaseflowSeparation(
+  dischargedatEC2018$Flow_Inst, 
+  filter_parameter = 0.925, #default parameter
+  passes = 3 #default parameter
+  )
+
+
+EC2018 <- cbind(dischargedatEC2018, ECbaseflow) #adding back in dates
+
+Export <- EC2018 %>%
+  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_),
+         baseflowexport = bt * timestep, #volume = rate (bt) x time
+         quickflowexport = qft * timestep) %>%
+  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T), #sum of all volume over the year
+            QuickflowExport_cf = sum(quickflowexport, na.rm = T),
+            TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+```
+
+```{r}
+Export$BaseflowExport_cf/Export$TotalExport_cf
+
+1-(Export$BaseflowExport_cf/Export$TotalExport_cf)
+
+```
+
+> 43.4% as baseflow, and 56.6% quickflow
 
 What does this mean physically about the watershed?
 
->
+> Ellerbe creek has more overland flow - closer to center of city, TFC has more trees, more open area because it has more baseflow.
 
 ## Hydrologic Flashiness
 
@@ -130,17 +177,22 @@ A "flashy" stream increases in flow faster following a precipitation event.
 
 Refering to our previous work with baseflow separation, would you expect flashiness to increase or decrease with urbanization?
 
-> 
+> urbanization increases flashiness
 
-What do you think "urban stream syndrom" refers to?
+What do you think "urban stream syndrome" refers to?
 
->
+> Very flashy, tend to be deeper(insized), water quality parameters that are characteristic of urban streams
 
-The Richards-Baker Index is an index of how flashy a stream is. It is calculated as $$RBI = (\sum_{j = 1}^n |Q_j - Q_{j-1}| / \sum_{j = 1}^n Q_j) / Catchment Area$$
+The Richards-Baker Index is an index of how flashy a stream is. It is calculated as
+
+$$RBI = (\sum_{j = 1}^n |Q_j - Q_{j-1}| / \sum_{j = 1}^n Q_j) / Catchment Area$$
+
+summing up total differences in flow between time stamps, divided by total flow, divided by catchment area
+the smaller the catchment, the shorter amount of time it takes to get to the stream
 
 ```{r Flashiness}
 TFCsitedata <- readNWISsite(site = "02097280")
-TFC.catchment.size <- TFCsitedata$drain_area_va #square miles
+TFC.catchment.size <- TFCsitedata$drain_area_va #square miles = 14.79
 
 RBI_TFC2018 <- (
   sum(abs(diff(dischargedatTFC2018$Flow_Inst))) / 
@@ -155,11 +207,49 @@ RBI_EC2018 <- (
     sum(dischargedatEC2018$Flow_Inst[-1])
   ) / EC.catchment.size
 
+RBI_TFC2018
+RBI_EC2018
 ```
 
 Which stream is flashier?
 
->
+> Ellerbe Creek is flashier because it has a higher RBI value
+
+
+Now, do with another site of your choosing:
+```{r}
+COdischarge <- readNWISuv(
+  site= "09163500", 
+  parameterCd = "00060",
+  startDate = "2018-01-01", 
+  endDate = "2019-01-01"
+  ) %>% 
+  renameNWISColumns()
+
+CObaseflow <- BaseflowSeparation(
+  COdischarge$Flow_Inst, 
+  filter_parameter = 0.925, #default parameter
+  passes = 3 #default parameter
+  )
+
+
+CO2018 <- cbind(COdischarge, CObaseflow) #adding back in dates
+
+ExportCO <- CO2018 %>%
+  mutate(timestep = c(diff(as.numeric(dateTime)), NA_real_),
+         baseflowexport = bt * timestep, #volume = rate (bt) x time
+         quickflowexport = qft * timestep) %>%
+  summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T), #sum of all volume over the year
+            QuickflowExport_cf = sum(quickflowexport, na.rm = T),
+            TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+view(ExportCO)
+
+ExportCO$BaseflowExport_cf/ExportCO$TotalExport_cf
+
+1-(ExportCO$BaseflowExport_cf/ExportCO$TotalExport_cf)
+
+```
+
 
 ## Chemical Flashiness
 
