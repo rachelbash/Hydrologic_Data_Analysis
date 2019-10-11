@@ -290,55 +290,5 @@ ggplot(Potdat,
 
 Which of these rivers is more chemostatic?
 
->
+> Crane Creek
 
-## Hysteresis Loops
-
-Hysteresis occurs when the concentration varies with discharge in a different relationship on the rising and falling limbs of a storm. This can be caused by _flushing_ behavior or _dilution_ behavior. 
-
-```{r}
-dygraph(
-  cbind(
-    Flow = xts(Potdat$Flow_Inst, order.by = Potdat$dateTime), 
-    Nitrate = xts(Potdat$Nitrate_mgl, order.by = Potdat$dateTime)
-    )
-  ) %>% 
-  dySeries("Nitrate", axis = "y2") %>%
-  dyRangeSelector()
-```
-
-Look at the storm that occured around February 1st. Do you expect this storm to be a flushing or a diluting storm?
-
->
-
-```{r}
-PotomacStorm <- Potdat %>%
-  filter(dateTime > "2016-01-31" & dateTime < "2016-02-14") 
-
-ggplot(PotomacStorm, aes(x = Flow_Inst, y = Nitrate_mgl, color = dateTime)) +
-  geom_point() 
-
-
-```
-
-Did this storm exhibit clockwise or counterclockwise hysteresis?
-
->
-
-Which direction do hysteresis loops go for diluting storms?
-
->
-
-Which direction do hysteresis loops go for flushing storms?
-
->
-
-## Closing Discussion
-
-What hydrological processes did we investigate today? 
-
->
-
-What can high-frequency data be used for that daily data may not be able to capture?
-
-> 
