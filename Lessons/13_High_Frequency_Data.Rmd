@@ -98,8 +98,8 @@ TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow) #adding back in dates
 ggplot(TFC2018, aes(x = dateTime, y = Flow_Inst)) + 
   geom_line() +
   # scale_y_log10() +
-  geom_line(mapping = aes(x = dateTime, y = bt), color = "darkorange4") +
-  geom_line(mapping = aes(x = dateTime, y = qft), color = "steelblue4")
+  geom_line(mapping = aes(x = dateTime, y = bt), color = "darkcyan") +
+  geom_line(mapping = aes(x = dateTime, y = qft), color = "coral2")
 
 dygraph(
   cbind(

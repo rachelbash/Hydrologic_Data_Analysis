@@ -129,7 +129,7 @@ ggplot(PotomacStorm, aes(x = Flow_Inst, y = Nitrate_mgl, color = dateTime)) +
 
 Did this storm exhibit clockwise or counterclockwise hysteresis?
 
-> Counter-Clockwise behavior where concentration decreases at the beginning of the storm (diluting) and then overtime increases concentration at the beginning of the storm. Slopes of the rising (quickflow) and falling limbs (baseflow) are different because they are coming from different sources that have different speeds at which they arrive at the river. Quickflow has lower concentrations of nitrate than in baseflow.
+> Counter-Clockwise behavior where concentration decreases at the beginning of the storm (diluting) and then overtime increases concentration at the end of the storm. Slopes of the rising (quickflow) and falling limbs (baseflow) are different because they are coming from different sources that have different speeds at which they arrive at the river. Quickflow has lower concentrations of nitrate than in baseflow.
 
 > Flushing system: increasing concentration from pushing the solute out of the system
 
