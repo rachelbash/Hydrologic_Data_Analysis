@@ -36,8 +36,7 @@ getwd()
 packages <- c(
   "tidyverse", 
   "StreamPULSE", 
-  "streamMetabolizer",
-  "EcoHydRology"
+  "streamMetabolizer"
   )
 
 invisible(
@@ -112,23 +111,44 @@ The `package::function()` notation being asked here is a way to call a function 
 
 
 ```{r}
+#create small df so that interpolation can be done
 Kansas.skinny <- Kansasdat.processed %>%
   select(DateTime_UTC, Discharge_m3s)
 
-linearinterpolation <- as.data.frame(approx(Kansas.skinny, n = 119, method = "linear"))
+#determining number of time-steps
+table(diff(Kansas.skinny$DateTime_UTC))
+#it looks like there are a substantial amount of observations taken at the same
+#time, and a small portion of missing data
+
+#therefore, n = # days * # timesteps in a day
+119*96
+
+#interpolate by number of days in time period
+linearinterpolation <- as.data.frame(approx(Kansas.skinny, n = 11424, method = "linear"))
 linearinterpolation$x <- as.POSIXct(linearinterpolation$x, origin = "1970-01-01")
 names(linearinterpolation) <- c("Date", "Discharge_m3s")
 
+#plot interpolated data onto full data to see if it looks right
+Kansas.interpolate.plot <- 
+  ggplot(Kansas.skinny, aes(x = DateTime_UTC, y = Discharge_m3s)) +
+  geom_point() +
+  geom_line() +
+  geom_point(data = linearinterpolation, aes(x = Date, y = Discharge_m3s), color = "#c13d75ff") 
+print(Kansas.interpolate.plot)
+
+#separate baseflow and quickflow from total flow
 Kansasbaseflow <- EcoHydRology::BaseflowSeparation(
   linearinterpolation$Discharge_m3s, 
   filter_parameter = 0.925, #default parameter
   passes = 3 #default parameter
   )
 
+#add back quickflow and baseflow calculations to the total flow
 Kansas.full <- cbind(linearinterpolation, Kansasbaseflow)
 
 flowtype <- c("Total", "Quickflow", "Baseflow")
 
+#plot the three lines on the same graph
 Kansas.full.plot <- ggplot(Kansas.full, aes(x = Date)) + 
   geom_line(aes(y = Discharge_m3s, color="Total"), size=1.1) +
   geom_line(mapping = aes(y = bt, color = "Baseflow"), size = 1.01) +
@@ -150,8 +170,10 @@ Export <- Kansas.full %>%
   summarize(BaseflowExport_cf = sum(baseflowexport, na.rm = T), 
             QuickflowExport_cf = sum(quickflowexport, na.rm = T),
             TotalExport_cf = BaseflowExport_cf + QuickflowExport_cf)
+
 #baseflow proportion
 Export$BaseflowExport_cf/Export$TotalExport_cf
+
 #quickflow proportion
 1-(Export$BaseflowExport_cf/Export$TotalExport_cf)
 
@@ -162,15 +184,15 @@ Export$BaseflowExport_cf/Export$TotalExport_cf
 
 11. What percentage of total water exported left as baseflow and quickflow from the Kansas River over this time period?
 
-> During this time period, 67.9% of total water exited as baseflow, while 32.1% of total water exited as quickflow.
+> During this time period, 96.2% of total water exited as baseflow, while 3.8% of total water exited as quickflow.
 
 12. This is a much larger river and watershed than the 2 we investigated in class. How does the size of the watershed impact how flow is partitioned into quickflow and baseflow? 
 
-> In this situation, the larger river caused a larger percentage of the total water to come from base flow. This makes sense, as it would be harder for a large river to be supported by a large amount of rain over an extended period of time.
+> In this situation, the larger river caused a the majority of the total water to come from base flow. This makes sense, as it would be harder for a large river to be supported by a large amount of rain over an extended period of time.
 
 13. The site we are looking at is also further down in its river network (i.e. instead of being a headwater stream, this river has multiple tributaries that flow into it). How does this impact your interpretation of your results?
 
-> Multiple tributaries probably smooth out the results and contribute to a steadier baseflow rate that is regularly being brought down the stream. Even if one tributary may be in a drought or may experience a large storm, it would have a small effect on the larger river because of the multiple inputs to the river.
+> Multiple tributaries probably smooth out the results and contribute to the majority of the baseflow rate that is regularly being brought down the stream. Even if one tributary may experience a large storm, it would have a small effect on the larger river because of the multiple inputs to the river.
 
 ## Chemical Hysteresis
 
@@ -182,9 +204,9 @@ Kansasdat.hysteresis <- Kansasdat.processed %>%
 
 Hysteresis.plot <- ggplot(Kansasdat.hysteresis) +
   geom_point(aes(x=Discharge_m3s, y = Nitrate_mgL, color = DateTime_UTC)) +
-  labs(x=expression("Discharge (m"^3*"/s)"), y = "Nitrate (mg/L)", color = "Date")
+  labs(x=expression("Discharge (m"^3*"/s)"), y = "Nitrate (mg/L)", color = "Date") 
 print(Hysteresis.plot)
-
+#no scale color gradient will work except for the default
 
 ```
 
