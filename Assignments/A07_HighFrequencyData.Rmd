@@ -121,6 +121,7 @@ table(diff(Kansas.skinny$DateTime_UTC))
 #time, and a small portion of missing data
 
 #therefore, n = # days * # timesteps in a day
+as.Date("2018-05-31")-as.Date("2018-02-01")
 119*96
 
 #interpolate by number of days in time period
@@ -134,7 +135,7 @@ Kansas.interpolate.plot <-
   geom_point() +
   geom_line() +
   geom_point(data = linearinterpolation, aes(x = Date, y = Discharge_m3s), color = "#c13d75ff") 
-print(Kansas.interpolate.plot)
+#print(Kansas.interpolate.plot)
 
 #separate baseflow and quickflow from total flow
 Kansasbaseflow <- EcoHydRology::BaseflowSeparation(
@@ -188,7 +189,7 @@ Export$BaseflowExport_cf/Export$TotalExport_cf
 
 12. This is a much larger river and watershed than the 2 we investigated in class. How does the size of the watershed impact how flow is partitioned into quickflow and baseflow? 
 
-> In this situation, the larger river caused a the majority of the total water to come from base flow. This makes sense, as it would be harder for a large river to be supported by a large amount of rain over an extended period of time.
+> In this situation, the larger river caused the majority of the total water to come from base flow. This makes sense, as it would be harder for a large river to be supported by a large amount of rain over an extended period of time.
 
 13. The site we are looking at is also further down in its river network (i.e. instead of being a headwater stream, this river has multiple tributaries that flow into it). How does this impact your interpretation of your results?
 
