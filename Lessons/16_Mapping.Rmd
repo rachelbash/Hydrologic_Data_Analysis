@@ -35,7 +35,10 @@ Today, we will be working with the USA rivers shape file (see metadata file in R
 
 ### Water features line objects
 ```{r}
-waterfeatures <- st_read("../Data/Raw/hydrogl020.dbf")
+
+#there are a bunch of shape files in the Raw/Watershed_spatial folder. FYI
+waterfeatures <- st_read("./Data/Raw/hydrogl020.dbf")
+#notice there is no information on projection
 class(waterfeatures)
 
 # Filter for North Carolina
@@ -61,11 +64,13 @@ print(Waterfeaturesplot)
 
 We will upload the HUC6 watershed designations for North Carolina. Note that in the Watersheds_Spatial folder, there are many different shape file datasets going from HUC2 (largest) to HUC16 (smallest) and NWIS drainage lines. These are all downloaded as zip from the Watershed Boundary Dataset (WBD).
 ```{r}
-HUC6 <- st_read("../Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
+HUC6 <- st_read("./Data/Raw/Watersheds_Spatial/WBDHU6.dbf")
+#notice that there is projection information
+#notice also in bbox that it has a min and max for x and y
 
 summary(HUC6$States)
 HUC6.NC <- HUC6 %>%
-  filter(States %in% c("GA,NC,SC", "NC", "NC,SC", "NC,SC,VA", "NC,VA"))
+  filter(States %in% c("GA,NC,SC", "NC", "NC,SC", "NC,SC,VA", "NC,VA")) #take states column and include anything in this list
 
 
 ```
@@ -77,17 +82,17 @@ Let's plot the watershed polygon features underneath the water features. Note th
 Notice that we chose to use the ColorBrewer "paired" palette here (a true qualitative palette), as it would have been difficult to distinguish the continuous viridis color palettes across 10 watersheds.
 
 ```{r}
-st_crs(waterfeatures)
-st_crs(HUC6.NC)
-waterfeatures <- st_set_crs(waterfeatures, 4269)
+st_crs(waterfeatures) #no projection exists
+st_crs(HUC6.NC) #already has a coordinate reference system
+waterfeatures <- st_set_crs(waterfeatures, 4269) #so set crs for water features so they are the same so we can map them on top of each other.
 st_crs(waterfeatures)
 
-#waterfeatures <- waterfeatures %>% st_set_crs(st_crs(HUC6.NC))
+#waterfeatures <- waterfeatures %>% st_set_crs(st_crs(HUC6.NC)) #if we wanted the proj4string for both the water features and the HUC6 to be identical, then you would run this line. For now, not necessary.
 
 NClayers <- ggplot() +
-  geom_sf(data = HUC6.NC, aes(fill = Name), color = "darkgray", alpha = 0.5) +
+  geom_sf(data = HUC6.NC, aes(fill = Name), color = "darkgray", alpha = 0.5) + #set watershed boundaries as dark grey so that it doesn't conflict with the black water features lines
   geom_sf(data = waterfeatures) +
-  scale_fill_brewer(palette = "Paired")
+  scale_fill_brewer(palette = "Paired") #chose a qualitative color palette to better differentiate
 print(NClayers)
 
 ```
@@ -100,9 +105,9 @@ More information here: https://geocompr.robinlovelace.net/
 HUC6.Neuse <- filter(HUC6.NC, Name == "Neuse")
 
 Neusebasin <- ggplot() +
-  geom_sf(data = HUC6.Neuse, fill = "darkgray") +
+  geom_sf(data = HUC6.Neuse, fill = "darkgray") + #just plot Neuse basin
   geom_sf(data = waterfeatures, aes(fill = FEATURE, color = FEATURE)) +
-  xlim(c(-79.2, -75.9)) +
+  xlim(c(-79.2, -75.9)) + #used xlim and ylim of the waterfeatures to zoom in
   ylim(c(34.5, 36.5)) +
   labs(title = "Neuse River Basin", color = "Feature", fill = "Feature") +
   scale_color_viridis_d(option = "magma", end = 0.9) +
@@ -112,7 +117,7 @@ print(Neusebasin)
 
 What features are prevalent in the Neuse River basin? Where do certain features occur in the hydrologic network? How does this distribution compare to nearby basins?
 
-> 
+> A few dams to create lakes, Intracoastal waterway along the coast, not a closed, very defined shoreline. There aren't any canals, compared to other basins nearby. Looks like all rivers are flowing from the northwest to the southeast. The boundary kind of juts out in the ocean, with no clear reason why that designation is there. Kateri doesn't know either.
 
 ## Closing Discussion
 
