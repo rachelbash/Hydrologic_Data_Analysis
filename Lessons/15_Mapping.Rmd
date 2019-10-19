@@ -209,8 +209,7 @@ print(Both)
 > It seems like the bigger the lake (area), the more likely you will find a shallow secchi depth. And there are more medium depth lakes that have deep secchi depths.
 
 ```{r}
-model1 <- lm(data=MEsecchi.summary, secchi.mean ~ area + depth)
-summary(model1)
+
 ```
 
 
