@@ -26,7 +26,7 @@ High frequency data is usually defined as frequencies significantly lower than d
 getwd()
 
 packages <- c(
-  "dataRetrieval", "tidyverse", "cowplot", "EcoHydRology", "xts", "dygraphs"
+  "dataRetrieval", "tidyverse", "cowplot", "xts", "dygraphs"
   )
 invisible(lapply(packages, library, character.only = TRUE)) 
 
@@ -86,18 +86,18 @@ _"Hydrograph separation is one of the most desperate analysis techniques in use 
 
 
 ```{r baseflowseparation}
-TFCbaseflow <- BaseflowSeparation(
+TFCbaseflow <- EcoHydRology::BaseflowSeparation(
   dischargedatTFC2018$Flow_Inst, 
   filter_parameter = 0.925, #default parameter
   passes = 3 #default parameter
   )
 #gives us two columns: bt(baseflow time series) and qft (quickflow time series)
 
-TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow) #adding back in dates
+TFC2018 <- cbind(dischargedatTFC2018, TFCbaseflow) #adding back in dates and the total discharge
 
 ggplot(TFC2018, aes(x = dateTime, y = Flow_Inst)) + 
   geom_line() +
-  # scale_y_log10() +
+  #scale_y_log10() +
   geom_line(mapping = aes(x = dateTime, y = bt), color = "darkcyan") +
   geom_line(mapping = aes(x = dateTime, y = qft), color = "coral2")
 

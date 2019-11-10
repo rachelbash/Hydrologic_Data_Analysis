@@ -135,7 +135,7 @@ Kansas.interpolate.plot <-
   geom_point() +
   geom_line() +
   geom_point(data = linearinterpolation, aes(x = Date, y = Discharge_m3s), color = "#c13d75ff") 
-#print(Kansas.interpolate.plot)
+print(Kansas.interpolate.plot)
 
 #separate baseflow and quickflow from total flow
 Kansasbaseflow <- EcoHydRology::BaseflowSeparation(

@@ -74,6 +74,7 @@ EnoDischarge <-
   EnoDischarge %>%
   mutate(Year = year(Date))
 
+
 EnoRecurrence <- 
   EnoDischarge %>%
   filter(Year < 1993) %>%
